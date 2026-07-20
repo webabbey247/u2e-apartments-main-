@@ -165,3 +165,35 @@ model User {
 
   @@schema("public")
 }
+
+/// Inventory bucket a reservation occupies. Reservations reference rooms via
+/// this enum rather than a room id/slug.
+enum RoomType {
+  TWO_BED
+  THREE_BED
+
+  @@schema("public")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  NOT_FOUND
+  FAILED
+
+  @@map("ReservationStatus")
+  @@schema("public")
+}
+
+/// Existing reservations (owned by the booking flow) — read here only to work
+/// out availability. Minimal field set: just what an overlap check needs.
+model Booking {
+  id       String        @id
+  checkIn  String
+  checkOut String
+  roomType RoomType
+  status   BookingStatus @default(PENDING)
+
+  @@map("Reservation")
+  @@schema("public")
+}

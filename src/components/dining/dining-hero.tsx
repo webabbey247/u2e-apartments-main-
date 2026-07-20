@@ -18,7 +18,7 @@ export function DiningHero() {
     <section className="relative flex h-[80vh] min-h-[560px] w-full items-end overflow-hidden">
       <div ref={scaleRef} className="absolute inset-0">
         <Image
-          src={DINING_HERO.image}
+          src="/assets/dinning-hero.webp"
           alt="U2E Apartments dining"
           fill
           priority

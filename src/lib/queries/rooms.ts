@@ -80,8 +80,15 @@ export async function getSuites(): Promise<SuiteCard[]> {
 
 // ── Unit detail (crm.Room → UnitDetail) ───────────────────────────────────
 
-/** UnitDetail plus the amenities list the detail page renders. */
-export type UnitDetailFull = UnitDetail & { amenities: Amenity[] };
+/** UnitDetail plus the amenities list + raw booking values the modal needs. */
+export type UnitDetailFull = UnitDetail & {
+  amenities: Amenity[];
+  /** Raw NGN price (per stay) — the formatted `priceFrom` is display-only. */
+  priceValue: number;
+  sleeps: number;
+  extraBed: boolean;
+  extraBedPrice: number;
+};
 
 const nairaFmt = new Intl.NumberFormat("en-NG");
 const formatNaira = (n: number) => `₦${nairaFmt.format(n)}`;
@@ -156,6 +163,10 @@ export async function getUnitBySlug(slug: string): Promise<UnitDetailFull | null
       gallery: gallery.length > 0 ? gallery : [FALLBACK_IMAGE],
       priceFrom: `${formatNaira(r.priceFrom)} / night`,
       amenities: servicesToAmenities(r.services),
+      priceValue: r.priceFrom,
+      sleeps: r.sleeps,
+      extraBed: r.extraBed,
+      extraBedPrice: r.extraBedPrice,
     };
   } catch (err) {
     console.error(`[getUnitBySlug:${slug}] error:`, err);

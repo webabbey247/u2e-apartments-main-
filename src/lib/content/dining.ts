@@ -44,10 +44,8 @@ export const DINING_GALLERY = {
   eyebrow: "Explore",
   title: "Every Table, a Different Mood",
   images: [
-    `${CDN}/69e0d9778f7f98b647c60941_resturent.webp`,
-    `${CDN}/69ec97814b36402410ac9658_reesturant%20slider%20(2)%20(1).webp`,
-    `${CDN}/69ec97546fabb03c26212754_reesturant%20slider%20(3).webp`,
-    `${CDN}/69ec975405d918ee9d88ed44_reesturant%20slider%20(1).webp`,
+    `/assets/dinning/dinning-gallery-1.webp`,
+    `/assets/dinning/dinning-gallery-2.webp`,
   ],
 } as const;
 

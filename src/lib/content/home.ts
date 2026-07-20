@@ -188,7 +188,7 @@ export const EVENTS = {
   title: "Personalized Events",
   body: "Make our event spaces and private dining rooms the backdrop for your most memorable days.",
   items: [
-    { title: "Weddings", desc: "Onsite catering and space to host all your guests for the celebration.", image: `${CDN}/69df1d781da97d71280f2c32_perosnal%20event%20(1)-p-500.webp` },
+    { title: "Weddings", desc: "Onsite catering and space to host all your guests for the celebration.", image: `/assets/u2e-wedding-events.webp` },
     { title: "Corporate", desc: "Flexible meeting rooms with the service and tech to keep the day running.", image: `${CDN}/69df1d789a136a534c367245_perosnal%20event%20(2)-p-500.webp` },
     { title: "Celebrations", desc: "Birthdays and anniversaries in a private setting with curated menus.", image: `${CDN}/69df1d78efdcbe81f3e4131f_perosnal%20event%20(3)-p-500.webp` },
   ],

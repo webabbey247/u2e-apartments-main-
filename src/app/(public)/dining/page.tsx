@@ -36,7 +36,7 @@ export default function DiningPage() {
           </div>
           <ImageSlider images={[...DINING_GALLERY.images]} name="U2E dining" />
         </div>
-        <Wellness content={POOLSIDE} />
+        {/* <Wellness content={POOLSIDE} /> */}
         <SocialMediaMarquee />
       </main>
       <Footer />

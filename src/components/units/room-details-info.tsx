@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useMoveY } from "@/hooks/use-animations";
-import { BrandButton } from "@/components/ui/brand-button";
-import type { UnitDetail } from "@/lib/content/units";
+import { BookingModal } from "@/components/booking/booking-modal";
+import type { UnitDetailFull } from "@/lib/queries/rooms";
 
 function Highlight({ title, desc }: { title: string; desc: string }) {
   const ref = useMoveY<HTMLDivElement>();
@@ -19,8 +20,9 @@ function Highlight({ title, desc }: { title: string; desc: string }) {
  * "The Details" description on the left and highlight blocks on the right.
  * Specs / title live on the hero, matching the template.
  */
-export function RoomDetailsInfo({ unit }: { unit: UnitDetail }) {
+export function RoomDetailsInfo({ unit }: { unit: UnitDetailFull }) {
   const detailsRef = useMoveY<HTMLDivElement>();
+  const [reserveOpen, setReserveOpen] = useState(false);
 
   return (
     <section className="bg-paper px-6 py-20 md:px-10 md:py-28">
@@ -31,9 +33,16 @@ export function RoomDetailsInfo({ unit }: { unit: UnitDetail }) {
             {unit.details}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <BrandButton href={`/bookings?unit=${unit.slug}`} variant="solid">
-              Reserve Suite
-            </BrandButton>
+            <button
+              type="button"
+              onClick={() => setReserveOpen(true)}
+              className="group inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-montserrat text-xs font-semibold uppercase tracking-[0.12em] text-paper transition-all duration-500 ease-brand hover:gap-3 hover:bg-brand/90"
+            >
+              <span>Check Availability</span>
+              <span aria-hidden className="transition-transform duration-500 ease-brand group-hover:translate-x-1">
+                →
+              </span>
+            </button>
             <span className="font-montserrat text-sm text-ink/60">
               From <span className="text-ink">{unit.priceFrom}</span>
             </span>
@@ -45,6 +54,8 @@ export function RoomDetailsInfo({ unit }: { unit: UnitDetail }) {
           ))}
         </div>
       </div>
+
+      <BookingModal unit={unit} open={reserveOpen} onClose={() => setReserveOpen(false)} />
     </section>
   );
 }
