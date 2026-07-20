@@ -22,21 +22,49 @@ function SourceIcon({ source, className = "h-7 w-7" }: { source: SocialSource; c
   );
 }
 
-// Decorative scattered icons for the section background (percent positions).
-const SCATTER: { source: SocialSource; top: string; left: string; size: string; rotate: number; opacity: number }[] = [
-  { source: "instagram", top: "8%", left: "6%", size: "h-10 w-10", rotate: -12, opacity: 0.12 },
-  { source: "tiktok", top: "18%", left: "22%", size: "h-8 w-8", rotate: 8, opacity: 0.1 },
-  { source: "instagram", top: "70%", left: "12%", size: "h-14 w-14", rotate: 14, opacity: 0.09 },
-  { source: "tiktok", top: "82%", left: "34%", size: "h-9 w-9", rotate: -6, opacity: 0.12 },
-  { source: "instagram", top: "40%", left: "3%", size: "h-8 w-8", rotate: 20, opacity: 0.1 },
-  { source: "tiktok", top: "6%", left: "48%", size: "h-12 w-12", rotate: -16, opacity: 0.08 },
-  { source: "instagram", top: "86%", left: "58%", size: "h-8 w-8", rotate: 10, opacity: 0.11 },
-  { source: "tiktok", top: "14%", left: "74%", size: "h-10 w-10", rotate: -10, opacity: 0.1 },
-  { source: "instagram", top: "68%", left: "82%", size: "h-14 w-14", rotate: 12, opacity: 0.09 },
-  { source: "tiktok", top: "38%", left: "94%", size: "h-9 w-9", rotate: -20, opacity: 0.12 },
-  { source: "instagram", top: "4%", left: "90%", size: "h-8 w-8", rotate: 16, opacity: 0.1 },
-  { source: "tiktok", top: "88%", left: "4%", size: "h-8 w-8", rotate: -14, opacity: 0.1 },
-];
+// ── Decorative background scatter ─────────────────────────────────────────
+// Built from a jittered grid rather than hand-placed points: the grid keeps
+// coverage even (no bald patches or clumps) while the jitter keeps it from
+// reading as a lattice. Seeded and pure, so server and client render
+// identically — Math.random() here would cause a hydration mismatch.
+
+const SCATTER_COLS = 10;
+const SCATTER_ROWS = 7;
+/** How far an icon may drift from its cell centre, as a fraction of the cell. */
+const JITTER = 0.9;
+const SCATTER_SIZES = ["h-8 w-8", "h-10 w-10", "h-12 w-12", "h-14 w-14"];
+
+/** Deterministic pseudo-random in [0,1) from an integer seed. */
+function seeded(n: number) {
+  const x = Math.sin(n * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+const SCATTER: {
+  source: SocialSource;
+  top: string;
+  left: string;
+  size: string;
+  rotate: number;
+  opacity: number;
+}[] = Array.from({ length: SCATTER_COLS * SCATTER_ROWS }, (_, i) => {
+  const col = i % SCATTER_COLS;
+  const row = Math.floor(i / SCATTER_COLS);
+  const dx = (seeded(i + 1) - 0.5) * JITTER;
+  const dy = (seeded(i + 101) - 0.5) * JITTER;
+  const spin = seeded(i + 201);
+  const pick = seeded(i + 301);
+
+  return {
+    // Alternate per cell so neither platform clusters on one side.
+    source: (col + row) % 2 === 0 ? "instagram" : "tiktok",
+    left: `${(((col + 0.5 + dx) / SCATTER_COLS) * 100).toFixed(2)}%`,
+    top: `${(((row + 0.5 + dy) / SCATTER_ROWS) * 100).toFixed(2)}%`,
+    size: SCATTER_SIZES[Math.floor(pick * SCATTER_SIZES.length)],
+    rotate: Math.round((spin - 0.5) * 50),
+    opacity: Number((0.12 + pick * 0.11).toFixed(3)),
+  };
+});
 
 /**
  * Social media feed strip — a continuous `marquee-track` loop of posts pulled
