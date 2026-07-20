@@ -1,0 +1,166 @@
+// U2E Apartments — Prisma schema (Prisma v7).
+// New `prisma-client` generator (ESM/TS) + query compiler; runtime queries go
+// through a driver adapter (see src/lib/prisma.ts). The connection URL lives in
+// prisma.config.ts, not here.
+//
+// multiSchema: content (units/rooms) is owned by the CRM in the `crm` schema.
+// This guest site READS `crm.Room` for accommodation listings. `public` holds
+// this app's own tables.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["crm", "public"]
+}
+
+// ---------------------------------------------------------------------------
+// crm schema — owned by the CRM; read-only from this app
+// ---------------------------------------------------------------------------
+
+enum FaqCategory {
+  ACCOMMODATION
+  GENERAL
+  DINING
+  EXPERIENCE
+  SUPPORT
+  RESERVATIONS
+
+  @@schema("crm")
+}
+
+/// Guest-facing FAQs, grouped by category. Mirrors `crm.Faq`.
+model Faq {
+  id        String      @id @default(cuid())
+  category  FaqCategory @default(GENERAL)
+  question  String
+  answer    String
+  sortOrder Int         @default(0)
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([category])
+  @@index([active])
+  @@schema("crm")
+}
+
+// ── Site configuration (singletons + bank list), authored in the CRM ──────
+
+/// Bank accounts for offline (bank-transfer) payments. Mirrors `crm.BankAccount`.
+model BankAccount {
+  id            String   @id @default(cuid())
+  bankName      String
+  accountName   String
+  accountNumber String
+  archived      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([archived])
+  @@schema("crm")
+}
+
+/// Social media links (singleton config). Mirrors `crm.SocialMedia`.
+model SocialMedia {
+  id        String   @id @default(cuid())
+  facebook  String   @default("")
+  instagram String   @default("")
+  x         String   @default("")
+  tiktok    String   @default("")
+  updatedAt DateTime @updatedAt
+
+  @@schema("crm")
+}
+
+/// Contact details + map embed (singleton config). Mirrors `crm.ContactInfo`.
+model ContactInfo {
+  id        String   @id @default(cuid())
+  address   String   @default("")
+  email     String   @default("")
+  mobile    String   @default("")
+  mapUrl    String   @default("")
+  updatedAt DateTime @updatedAt
+
+  @@schema("crm")
+}
+
+/// Guest experiences authored in the CRM. Mirrors `crm.Experience`.
+/// `spotlight` marks experiences featured in the home-page experiences section.
+model Experience {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  image       String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  spotlight   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([spotlight])
+  @@schema("crm")
+}
+
+/// Gallery images authored in the CRM. Mirrors `crm.GalleryImage`.
+/// `spotlight` marks images featured in the home-page marquee. (Read model —
+/// the `categoryId` FK is kept scalar; we don't need the category relation here.)
+model GalleryImage {
+  id         String   @id @default(cuid())
+  categoryId String
+  image      String
+  alt        String   @default("")
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  spotlight  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([active])
+  @@index([spotlight])
+  @@schema("crm")
+}
+
+/// A bookable unit/room type, authored in the CRM. Mirrors `crm.Room`.
+model Room {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  description   String
+  bedrooms      Int      @default(1)
+  bathrooms     Int      @default(1)
+  sleeps        Int      @default(2)
+  size          String
+  priceFrom     Int      @default(0) // NGN, per stay
+  featuredImage String?
+  images        String[]
+  services      String[]
+  extraBed      Boolean  @default(false)
+  extraBedPrice Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([active])
+  @@schema("crm")
+}
+
+// ---------------------------------------------------------------------------
+// public schema — owned by this app
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@schema("public")
+}
