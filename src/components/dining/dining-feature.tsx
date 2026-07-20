@@ -38,7 +38,7 @@ export function DiningFeature() {
         <div ref={wrap}>
           <div ref={scale} className="relative aspect-[4/5] overflow-hidden rounded-xl">
             <Image
-              src="/assets/dinning/dinning-gallery-4.webp"
+              src={DINING_FEATURE.image}
               alt="The U2E Kitchen"
               fill
               sizes="(max-width:1024px) 100vw, 50vw"

@@ -18,17 +18,20 @@ import { getVillas } from "@/lib/queries/rooms";
 import { getFaqs } from "@/lib/queries/faqs";
 import { getMarqueeImages, getGalleryImages } from "@/lib/queries/gallery";
 import { getSpotlightExperiences } from "@/lib/queries/experiences";
+import { getUpcomingEvents } from "@/lib/queries/events";
 import { FAQ } from "@/lib/content/home";
+import { UpcomingEvents } from "@/components/meetings/upcoming-events";
 
 // Revalidate the CRM-backed villas + FAQs + gallery periodically (ISR).
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [villas, marqueeImages, galleryImages, experiences] = await Promise.all([
+  const [villas, marqueeImages, galleryImages, experiences, events] = await Promise.all([
     getVillas(),
     getMarqueeImages(),
     getGalleryImages(5),
     getSpotlightExperiences(4),
+    getUpcomingEvents(),
   ]);
   const faq = await getFaqs(["SUPPORT", "GENERAL"], {
     eyebrow: FAQ.eyebrow,
@@ -46,13 +49,8 @@ export default async function HomePage() {
         <About />
         <Experiences items={experiences} />
          <Villas items={villas} />
-        {/* <RoomsSlider /> */}
-       
-        {/* <Wellness /> */}
         <Gallery images={galleryImages} />
-        <Events />
-         {/* <Amenities /> */}
-        {/* <Journal /> */}
+         <UpcomingEvents items={events} />
         <Faq content={faq} />
         <SocialMediaMarquee />
       </main>

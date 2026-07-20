@@ -152,6 +152,60 @@ model Room {
   @@schema("crm")
 }
 
+/// Dining menu items authored in the CRM. Mirrors `crm.MenuList`. (Read model —
+/// the `categoryId` FK is kept scalar; the dish grid doesn't need the category.)
+model MenuList {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  categoryId  String
+  price       Int      @default(0) // NGN
+  available   Boolean  @default(true)
+  archived    Boolean  @default(false)
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([archived])
+  @@index([categoryId])
+  @@schema("crm")
+}
+
+/// Event categories authored in the CRM. Mirrors `crm.EventCategory` — we read
+/// it only to label each event card.
+model EventCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@schema("crm")
+}
+
+/// Dated happenings hosted at U2E, authored in the CRM. Mirrors `crm.Event`.
+model Event {
+  id          String        @id @default(cuid())
+  categoryId  String
+  category    EventCategory @relation(fields: [categoryId], references: [id])
+  slug        String        @unique
+  title       String
+  description String
+  eventDate   DateTime
+  image       String
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([active])
+  @@schema("crm")
+}
+
 // ---------------------------------------------------------------------------
 // public schema — owned by this app
 // ---------------------------------------------------------------------------

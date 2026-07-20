@@ -12,7 +12,7 @@ export function EventOccasions() {
   const listRef = useMoveY<HTMLUListElement>();
 
   return (
-    <section className="bg-mist px-6 py-24 md:px-10 md:py-32">
+    <section className="bg-paper px-6 py-24 md:px-10 md:py-32">
       <div className="mx-auto grid max-w-[1200px] gap-12 lg:grid-cols-2 lg:gap-20">
         <div className="max-w-md">
           <p className="mb-4 font-montserrat text-xs uppercase tracking-[0.3em] text-brand">

@@ -25,16 +25,16 @@ export function Footer() {
       {/* CTA band */}
       <div className="border-b border-paper/10 px-6 py-20 text-center md:px-10">
         <p className="font-montserrat text-xs uppercase tracking-[0.3em] text-gold">
-          Your Stay Awaits
+        Ready to Feel at Home?
         </p>
         <h2 className="mx-auto mt-5 max-w-3xl font-cinzel text-4xl leading-tight md:text-6xl">
-          Book Your Stay at U2E Apartments
-        </h2>
+Your Next Great Stay Starts Here        
+</h2>
         <Link
           href="/accommodation"
           className="mt-9 inline-flex rounded-full bg-brand px-8 py-4 font-montserrat text-xs font-semibold uppercase tracking-[0.15em] text-paper transition-all duration-500 ease-brand hover:bg-brand/90"
         >
-          Book a Stay
+        Book Your Stay Today
         </Link>
       </div>
 
@@ -43,8 +43,7 @@ export function Footer() {
         <div>
           <span className="font-cinzel text-2xl tracking-[0.2em]">U2E</span>
           <p className="mt-4 max-w-xs font-lato text-sm leading-relaxed text-paper/60">
-            Serviced apartments, dining, wellness, and event spaces — all at one address.
-          </p>
+Serviced apartments, dining, wellness, and event spaces — all at one address.          </p>
           <a
             href={`tel:${phone.replace(/\s+/g, "")}`}
             className="mt-5 inline-block font-montserrat text-sm text-paper/70 transition-colors duration-300 ease-brand hover:text-paper"

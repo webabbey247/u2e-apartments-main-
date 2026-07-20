@@ -33,9 +33,9 @@ export const CONTACT_PHONE = "000 111 2224";
 
 export const HERO = {
   eyebrow: "Serviced Apartments",
-  title: "A Refined City Escape",
-  body: "Elegant by design and effortless by nature — U2E Apartments pairs beautifully appointed suites with in-house dining, wellness, and curated experiences under one roof.",
-  cta: { label: "Explore U2E", href: "#about" },
+  title: "Comfort Has a New Address",
+  body: "Spacious 2 & 3 Bedroom Suites designed for comfort, safety, and everyday ease — book your stay in minutes.",
+  cta: { label: "Reserve Your Suite", href: "/accomodation" },
 } as const;
 
 export const MARQUEE_IMAGES = [
@@ -49,16 +49,16 @@ export const MARQUEE_IMAGES = [
 
 export const ABOUT = {
   eyebrow: "About Us",
-  title: "Elegant by Design, Effortless by Nature",
-  body: "U2E Apartments is a single-location retreat built for longer, better stays — spacious serviced units, a restaurant kitchen, a spa and fitness floor, and event spaces, all within one address.",
+  title: "Welcome to U2E Apartments",
+  body: "At U2E, we believe a great stay starts with a space that feels like home. Whether you're in town for a short trip or settling in for longer, our thoughtfully furnished 2 and 3 Bedroom Suites give you the comfort, privacy, and peace of mind you deserve — all wrapped in a warm, welcoming experience from check-in to check-out.",
   cta: { label: "Know More About Us", href: "/accommodation" },
 } as const;
 
 export const EXPERIENCES = {
   eyebrow: "Experiences",
-  title: "Curated Ways to Unwind",
-  body: "Recharge at the spa, move in the fitness studio, or slow down over a long dinner. There is always a new way to relax here.",
-  cta: { label: "Explore our experiences", href: "/experience" },
+  title: "Little Moments Made for Unwinding",
+  body: "Sink into the spa, get your sweat on in the fitness studio, or linger over a long, delicious dinner. However you like to unwind, there's always something waiting for you here.",
+  cta: { label: "Discover Our Experiences", href: "/experience" },
   items: [
     {
       title: "Spa & Wellness",
@@ -90,7 +90,7 @@ export const QUOTE = {
 
 export const ROOMS = {
   eyebrow: "Accommodation",
-  title: "Suites Designed for Living",
+  title: "Pick the Perfect Space for You",
   body: "Every stay deserves a home base. Think of our serviced units as your private haven within the city.",
   cta: { label: "All Rooms", href: "/accommodation" },
   slides: [
@@ -172,9 +172,9 @@ export const WELLNESS = {
 
 export const GALLERY = {
   eyebrow: "Gallery",
-  title: "Discover the Beauty of Every Corner",
-  body: "Browse a curated collection of moments that reflect the charm, calm, and comfort of U2E Apartments — a story of restful stays and refined living.",
-  cta: { label: "Our Gallery", href: "/gallery" },
+  title: "Every Corner Tells a Story",
+  body: "Step through a collection of moments that capture the warmth, calm, and comfort of U2E Apartments — a glimpse into restful stays and refined living, one frame at a time.",
+  cta: { label: "Explore Our Gallery", href: "/gallery" },
   images: [
     `${CDN}/69e0bfa15f0fa8776fb91cc7_gallery%20(9)-p-1080.webp`,
     `${CDN}/69e0bfa20f07ad276eea151f_gallery%20(1)-p-1080.webp`,
@@ -208,7 +208,7 @@ export type SocialSource = "instagram" | "tiktok";
 
 export const SOCIAL = {
   eyebrow: "@u2eapartments",
-  title: "Follow Our Story",
+  title: "Fresh off the pass.",
   handle: "@u2eapartments",
   links: {
     instagram: "https://instagram.com",

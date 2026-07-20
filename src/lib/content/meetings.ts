@@ -39,8 +39,8 @@ export const ESSENTIALS = {
 
 export const OCCASIONS = {
   eyebrow: "For Every Occasion",
-  title: "Spaces for All Occasions",
-  body: "From the boardroom to the ballroom, setting is everything — so we've created a range of spaces to fit your vision, balancing intimacy with capacity.",
+  title: "A Space for Every Story",
+  body: "From boardroom meetings to ballroom celebrations, we've shaped every space with intention — so whether you need something intimate or something grand, you'll find a setting that fits.",
   items: [
     "Galas & Fundraisers",
     "Birthday Dinners & Anniversaries",
@@ -76,8 +76,8 @@ export const EVENT_SPACES = {
 
 export const UPCOMING_EVENTS = {
   eyebrow: "What's On",
-  title: "Upcoming Events",
-  body: "A calendar of dinners, tastings, and celebrations hosted at U2E — reserve your place before they fill up.",
+  title: "Good Times, Coming Up",
+  body: "From cozy dinners to joyful celebrations, there's always something happening at U2E. Grab your spot early — these moments tend to fill up fast!",
   items: [
     {
       slug: "rooftop-jazz-night",

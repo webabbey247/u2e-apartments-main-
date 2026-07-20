@@ -7,42 +7,43 @@
 
 const CDN = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960ee";
 const CDN2 = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960fb";
+const SANITY = "https://cdn.sanity.io/images/wdxob59c/production";
 
 export const DINING_HERO = {
   eyebrow: "Dining",
-  title: "Restaurant & Food",
-  body: "An in-house kitchen at the heart of U2E — a seasonal menu, an easy wine list, and craft cocktails, served from breakfast through to the last table of the night.",
-  image: `${CDN}/69e0d0f6d2412e4757438db1_hero%20(3).webp`,
+  title: "Good Food, Made With Care",
+  body: "From your first coffee of the day to the last table of the night, our in-house kitchen keeps things simple and delicious — a seasonal menu, an easy-to-love wine list, and craft cocktails made just right.",
+  image: `/assets/dinning-hero.webp`,
 } as const;
 
 export const DINING_FEATURE = {
   eyebrow: "The U2E Kitchen",
-  title: "Seasonal Plates, Thoughtfully Served",
-  body: "Under the direction of our head chef, The U2E Kitchen offers an intimate, unforgettable dining experience that pairs comfort classics with contemporary flavour — complemented by a considered wine list and craft cocktails.",
+  title: "Every Plate, Made With Intention",
+  body: "Led by our head chef, The U2E Kitchen brings you an intimate dining experience where comfort classics meet contemporary flavor — paired with a thoughtful wine list and handcrafted cocktails.",
   cta: { label: "Reserve a Table", href: "/contact" },
-  image: `${CDN}/69e0d58bfb600feff632b52f_restaurant-5107511_1920%201%20(1).webp`,
+  image: `/assets/dinning/dinning-gallery-4.webp`,
 } as const;
 
-export const RESTAURANT_HOURS = {
+export const RESTAURANT_MENU = {
   eyebrow: "Visit Us",
-  title: "The U2E Kitchen",
-  body: "Whether you're staying with us or dropping by, the kitchen is the perfect place to slow down over a good meal.",
+  title: "Straight from our kitchen.",
+  body: "Staying with us or just passing through — either way, our kitchen is where you come to slow down and enjoy a really good meal.",
   note: "*Reservations recommended",
-  columns: [
-    {
-      heading: "Restaurant Hours",
-      lines: ["Daily", "Brunch  7:00am – 3:00pm", "Dinner  3:00pm – 10:00pm"],
-    },
-    {
-      heading: "Bar Hours",
-      lines: ["Daily  7:00am – 12:00am", "Tapas Menu  3:00pm – 10:00pm"],
-    },
+  // TODO: placeholder imagery — swap for U2E kitchen photography (or a
+  // `crm.MenuItem` read) before launch.
+  items: [
+    { name: "Smoky party jollof", image: `${SANITY}/88d9b1a33e86c9c3b0c987778bd289ea13b2391b-736x736.jpg` },
+    { name: "Fried rice & chicken", image: `${SANITY}/88caccc49dd0e7ce01167657b424f6305d563f7d-720x720.jpg` },
+    { name: "Chicken shawarma", image: `${SANITY}/c0462f1159461429ee949fb6df4f5ebd5cd2fae4-720x960.jpg` },
+    { name: "Peppered goat meat", image: `${SANITY}/c0462f1159461429ee949fb6df4f5ebd5cd2fae4-720x960.jpg` },
+    { name: "Grilled tilapia", image: `${SANITY}/c61e679f769a38fdeaee0836648e1fe8d1ccb17f-736x1104.jpg` },
+    { name: "Dodo & sides", image: `${SANITY}/41a740820ae53a7fb012e35e829946f06e086889-736x748.jpg` },
   ],
 } as const;
 
 export const DINING_GALLERY = {
   eyebrow: "Explore",
-  title: "Every Table, a Different Mood",
+  title: "A New Mood at Every Table",
   images: [
     `/assets/dinning/dinning-gallery-1.webp`,
     `/assets/dinning/dinning-gallery-2.webp`,

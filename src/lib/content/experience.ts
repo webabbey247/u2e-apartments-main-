@@ -9,15 +9,15 @@ const CDN2 = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960fb";
 
 export const EXP_HERO = {
   eyebrow: "Experiences",
-  title: "Ways to Unwind",
-  body: "Recharge on your own terms — a fitness studio, a spa and wellness floor, a rooftop pool, and quiet corners to slow down, all a lift away from your suite.",
-  image: `${CDN2}/69d8919cb637aa7b28d7119a_seasonal%20experinace%20(1).avif`,
+  title: "Slow Down, Your Way",
+  body: "However you like to recharge, U2E has a spot for it — a fitness studio to break a sweat, a spa and wellness floor to breathe easier, a rooftop pool to soak in the view, and quiet corners just for slowing down. All just a lift ride from your suite.",
+  image: `/assets/u2e-experience-herobanner.webp`,
 } as const;
 
 export const EXPERIENCE_LISTING = {
   eyebrow: "On-Site",
-  title: "Experiences by the Floor",
-  body: "From an early workout to an evening by the pool, there's always a new way to relax at U2E.",
+  title: "A Different Way to Unwind, Every Floor",
+  body: "From a sunrise workout to a slow evening by the pool, U2E always has a new way for you to recharge.",
   items: [
     {
       key: "Fitness Studio",

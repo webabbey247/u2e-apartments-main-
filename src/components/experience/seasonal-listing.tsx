@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { EXPERIENCE_LISTING } from "@/lib/content/experience";
+import type { SeasonalExperience } from "@/lib/queries/experiences";
 import { RevealHeading } from "@/components/ui/reveal-heading";
 import { useImageScale, useMoveY } from "@/hooks/use-animations";
 import { cn } from "@/lib/utils/cn";
 
-type Item = (typeof EXPERIENCE_LISTING.items)[number];
+type Item = SeasonalExperience;
 
 function ExperienceCard({
   item,
@@ -24,7 +25,7 @@ function ExperienceCard({
       <div ref={imgRef} className="group relative aspect-[4/3] w-full overflow-hidden rounded-xl">
         <Image
           src={item.image}
-          alt={item.key}
+          alt={item.title}
           fill
           sizes="(max-width:1024px) 100vw, 55vw"
           className="object-cover"
@@ -35,7 +36,7 @@ function ExperienceCard({
         </span>
       </div>
       <div ref={textRef} className="mt-6">
-        <h3 className="font-cinzel text-3xl text-ink md:text-4xl">{item.headline}</h3>
+        <h3 className="font-cinzel text-3xl text-ink md:text-4xl">{item.title}</h3>
         <p className="mt-3 max-w-md font-lato text-base leading-relaxed text-ink/70">
           {item.desc}
         </p>
@@ -49,10 +50,10 @@ function ExperienceCard({
  * beside a normally-scrolling column of cards. As the cards scroll, the index
  * highlights the activity currently in view (scroll-spy via IntersectionObserver);
  * clicking an index item scrolls to its card. Each card image scales in and
- * reveals a "View" affordance on hover.
+ * reveals a "View" affordance on hover. `items` are the spotlit `crm.Experience`
+ * rows; the section copy around them stays editorial.
  */
-export function SeasonalListing() {
-  const items = EXPERIENCE_LISTING.items;
+export function SeasonalListing({ items }: { items: Item[] }) {
   const cardEls = useRef<(HTMLElement | null)[]>([]);
   const [active, setActive] = useState(0);
 
@@ -107,7 +108,7 @@ export function SeasonalListing() {
                       i === active ? "text-ink" : "text-ink/25 hover:text-ink/50",
                     )}
                   >
-                    {item.key}
+                    {item.title}
                   </button>
                 </li>
               ))}

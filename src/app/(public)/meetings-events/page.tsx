@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { EventsHero } from "@/components/meetings/events-hero";
-import { EventsIntro } from "@/components/meetings/events-intro";
+// import { EventsIntro } from "@/components/meetings/events-intro";
 import { EventOccasions } from "@/components/meetings/event-occasions";
 // import { EventSpaces } from "@/components/meetings/event-spaces";
 import { UpcomingEvents } from "@/components/meetings/upcoming-events";
 // import { EnquiryForm } from "@/components/meetings/enquiry-form";
 import { SocialMediaMarquee } from "@/components/home/social-marquee";
-import { RoomsSlider } from "@/components/home/rooms-slider";
+// import { RoomsSlider } from "@/components/home/rooms-slider";
 import { getVillas } from "@/lib/queries/rooms";
+import { getUpcomingEvents } from "@/lib/queries/events";
 
 export const metadata: Metadata = {
   title: "Meetings & Events — U2E Apartments",
@@ -22,7 +23,7 @@ export const revalidate = 60;
 
 
 export default async function MeetingsEventsPage() {
-    const villas = await getVillas()
+  const [villas, events] = await Promise.all([getVillas(), getUpcomingEvents()]);
   return (
     <>
       <Navbar />
@@ -30,11 +31,11 @@ export default async function MeetingsEventsPage() {
         {/* Order follows the template: hero → intro → essentials → occasions →
             spaces → feature → enquiry → instagram → footer */}
         <EventsHero />
-        <EventsIntro />
+        {/* <EventsIntro /> */}
         <EventOccasions />
         {/* <EventSpaces /> */}
-        <UpcomingEvents />
-        <RoomsSlider items={villas} />
+        <UpcomingEvents items={events} />
+        {/* <RoomsSlider items={villas} /> */}
         {/* <EnquiryForm /> */}
         <SocialMediaMarquee />
       </main>

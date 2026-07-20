@@ -8,6 +8,7 @@ import { SocialMediaMarquee } from "@/components/home/social-marquee";
 import { EXP_WELLNESS } from "@/lib/content/experience";
 import { RoomsSlider } from "@/components/home/rooms-slider";
 import { getVillas } from "@/lib/queries/rooms";
+import { getSeasonalExperiences } from "@/lib/queries/experiences";
 
 export const metadata: Metadata = {
   title: "Experience — U2E Apartments",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function ExperiencePage() {
-  const villas = await getVillas();
+  const [villas, experiences] = await Promise.all([getVillas(), getSeasonalExperiences()]);
   return (
     <>
       <Navbar />
@@ -27,8 +28,8 @@ export default async function ExperiencePage() {
         {/* Order follows the template: centered hero → seasonal listing →
             wellness feature → instagram → footer */}
         <ExperienceHero />
-        <SeasonalListing />
-        <RoomsSlider items={villas} />
+        <SeasonalListing items={experiences} />
+        {/* <RoomsSlider items={villas} /> */}
         <SocialMediaMarquee />
       </main>
       <Footer />

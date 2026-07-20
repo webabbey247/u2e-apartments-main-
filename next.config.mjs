@@ -17,6 +17,8 @@ const nextConfig = {
       // CRM-authored room images (UploadThing)
       { protocol: "https", hostname: "*.ufs.sh" },
       { protocol: "https", hostname: "utfs.io" },
+      // Placeholder dish photography on the dining menu grid
+      { protocol: "https", hostname: "cdn.sanity.io" },
     ],
   },
 };
