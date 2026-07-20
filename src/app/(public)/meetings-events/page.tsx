@@ -8,7 +8,7 @@ import { EventOccasions } from "@/components/meetings/event-occasions";
 import { UpcomingEvents } from "@/components/meetings/upcoming-events";
 // import { EnquiryForm } from "@/components/meetings/enquiry-form";
 import { SocialMediaMarquee } from "@/components/home/social-marquee";
-// import { RoomsSlider } from "@/components/home/rooms-slider";
+import { RoomsSlider } from "@/components/home/rooms-slider";
 import { getVillas } from "@/lib/queries/rooms";
 import { getUpcomingEvents } from "@/lib/queries/events";
 
@@ -35,7 +35,7 @@ export default async function MeetingsEventsPage() {
         <EventOccasions />
         {/* <EventSpaces /> */}
         <UpcomingEvents items={events} />
-        {/* <RoomsSlider items={villas} /> */}
+        <RoomsSlider items={villas} />
         {/* <EnquiryForm /> */}
         <SocialMediaMarquee />
       </main>

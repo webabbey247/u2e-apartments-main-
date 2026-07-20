@@ -66,7 +66,7 @@ export const MENU_INTRO = {
   eyebrow: "The U2E Kitchen",
   title: "Dining Menus",
   body: "A seasonal selection served fresh from our in-house kitchen. Guests can order to the table or in-suite throughout the day.",
-  image: `${CDN}/69e0d58bfb600feff632b52f_restaurant-5107511_1920%201%20(1).webp`,
+  image: `/assets/dinning/dinning-gallery-1.webp`,
 } as const;
 
 export const MENU: MenuCategory[] = [

@@ -5,6 +5,7 @@ import { RESTAURANT_MENU } from "@/lib/content/dining";
 import type { MenuDishData } from "@/lib/queries/menu";
 import { RevealHeading } from "@/components/ui/reveal-heading";
 import { useMoveY } from "@/hooks/use-animations";
+import { BrandButton } from "../ui/brand-button";
 
 function MenuDish({ name, image }: MenuDishData) {
   const ref = useMoveY<HTMLElement>();
@@ -26,7 +27,7 @@ function MenuDish({ name, image }: MenuDishData) {
           ) : (
             <span
               aria-hidden
-              className="absolute inset-0 flex items-center justify-center font-cinzel text-4xl text-paper/25"
+              className="absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(135deg,rgba(200,30,42,0.16)_0_10px,rgba(200,30,42,0.05)_10px_22px)] font-cinzel text-4xl text-paper/25"
             >
               U2E
             </span>
@@ -50,7 +51,9 @@ export function RestaurantMenu({ items }: { items: MenuDishData[] }) {
   return (
     <section className="bg-ink px-6 py-24 text-paper md:px-10 md:py-32">
       <div className="mx-auto max-w-[1100px]">
-        <div className="mb-14 max-w-xl">
+                <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+
+        <div className="max-w-xl">
           <p className="mb-4 font-montserrat text-xs uppercase tracking-[0.3em] text-brand">
             {RESTAURANT_MENU.eyebrow}
           </p>
@@ -60,6 +63,10 @@ export function RestaurantMenu({ items }: { items: MenuDishData[] }) {
           <p className="mt-5 font-lato text-base leading-relaxed text-paper/70">
             {RESTAURANT_MENU.body}
           </p>
+        </div>
+        <BrandButton href="/dining/menu" variant="solid">
+                   More Menu
+                  </BrandButton>
         </div>
 
         <div className="grid grid-cols-2 gap-3.5 min-[720px]:grid-cols-3 min-[720px]:gap-5">

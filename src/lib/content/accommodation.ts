@@ -11,9 +11,9 @@ const CDN2 = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960fb";
 
 export const ACC_HERO = {
   eyebrow: "Accommodation",
-  title: "Suites & Residences",
-  body: "Elegant by design and effortless by nature — every U2E unit is a serviced home base built for longer, better stays, moments from dining, wellness, and event spaces.",
-  image: `${CDN}/69e768c5ddfec6dbcd60149d_hero%20(4)-p-1080.webp`,
+  title: "Suites Built for Living",
+  body: "Every U2E unit is elegant by design, effortless by nature — a true home base for longer, better stays, with dining, wellness, and event spaces just moments away.",
+  image: `/assets/accommodation-hero-2.jpg`,
 } as const;
 
 export const SUITES = {
@@ -51,13 +51,13 @@ export const SUITES = {
 export const REASONS = {
   eyebrow: "Why U2E",
   title: "Four Good Reasons to Stay With Us",
-  image: `${CDN}/69eb3c012916554d21e581fb_about%20(2)-p-1080.webp`,
+  image: `/assets/why-u2e.jpg`,
   cta: { label: "Book Now", href: "/accommodation" },
   items: [
-    "Prime, serene location, and safety/security.",
-    "Great customer service.",
-    "High-speed Internet.",
-    "Enjoy the luxury of an entire apartment with modern facilities.",
+    "A calm, secure address, right where you need it.",
+    "Friendly, attentive service, every time.",
+    "Fast, reliable Wi-Fi, so you're always connected.",
+    "Your own full apartment, kitted out with modern comforts.",
   ],
 } as const;
 

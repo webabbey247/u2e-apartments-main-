@@ -18,7 +18,7 @@ export function AccommodationHero() {
     <section className="relative flex h-[80vh] min-h-[560px] w-full items-end overflow-hidden">
       <div ref={scaleRef} className="absolute inset-0">
         <Image
-          src="/assets/accommodation-hero-2.jpg"
+          src={ACC_HERO.image}
           alt="U2E Apartments accommodation"
           fill
           priority

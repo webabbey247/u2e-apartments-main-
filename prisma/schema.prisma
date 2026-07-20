@@ -152,19 +152,35 @@ model Room {
   @@schema("crm")
 }
 
-/// Dining menu items authored in the CRM. Mirrors `crm.MenuList`. (Read model —
-/// the `categoryId` FK is kept scalar; the dish grid doesn't need the category.)
+/// Menu categories authored in the CRM. Mirrors `crm.MenuCategory` — read to
+/// group and order the full menu listing.
+model MenuCategory {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  sortOrder   Int        @default(0)
+  active      Boolean    @default(true)
+  items       MenuList[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@schema("crm")
+}
+
+/// Dining menu items authored in the CRM. Mirrors `crm.MenuList`.
 model MenuList {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   description String
   categoryId  String
-  price       Int      @default(0) // NGN
-  available   Boolean  @default(true)
-  archived    Boolean  @default(false)
+  category    MenuCategory @relation(fields: [categoryId], references: [id])
+  price       Int          @default(0) // NGN
+  available   Boolean      @default(true)
+  archived    Boolean      @default(false)
   image       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([archived])
   @@index([categoryId])
