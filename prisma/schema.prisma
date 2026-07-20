@@ -135,6 +135,7 @@ model Room {
   description   String
   bedrooms      Int      @default(1)
   bathrooms     Int      @default(1)
+  units         Int      @default(1) // how many physical units of this type exist
   sleeps        Int      @default(2)
   size          String
   priceFrom     Int      @default(0) // NGN, per stay

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { VILLAS } from "@/lib/content/home";
 import { SUITES } from "@/lib/content/accommodation";
+import { UNIT_AMENITIES, type UnitDetail, type Amenity } from "@/lib/content/units";
 
 /** The shape the villa/room cards render. */
 export type VillaCard = {
@@ -74,5 +75,90 @@ export async function getSuites(): Promise<SuiteCard[]> {
   } catch (err) {
     console.error("[getSuites] falling back to static suites:", err);
     return SUITES.items.map((s) => ({ ...s }));
+  }
+}
+
+// ── Unit detail (crm.Room → UnitDetail) ───────────────────────────────────
+
+/** UnitDetail plus the amenities list the detail page renders. */
+export type UnitDetailFull = UnitDetail & { amenities: Amenity[] };
+
+const nairaFmt = new Intl.NumberFormat("en-NG");
+const formatNaira = (n: number) => `₦${nairaFmt.format(n)}`;
+
+/** Map a CRM `services` string to a known amenity icon, falling back to a check. */
+const ICON_BY_LABEL = new Map(
+  UNIT_AMENITIES.map((a) => [a.label.toLowerCase(), a.icon]),
+);
+function servicesToAmenities(services: string[]): Amenity[] {
+  if (services.length === 0) return UNIT_AMENITIES;
+  return services.map((label) => ({
+    label,
+    icon: ICON_BY_LABEL.get(label.toLowerCase()) ?? "safe-box",
+  }));
+}
+
+function categoryFor(bedrooms: number): string {
+  if (bedrooms === 0) return "Studio";
+  if (bedrooms >= 3) return "Residence";
+  return "Suite";
+}
+
+// Editorial highlights aren't authored per-room in the CRM; use a sensible
+// default so the details layout stays balanced.
+const DEFAULT_HIGHLIGHTS = [
+  {
+    title: "Rooftop Aperitif",
+    desc: "Sundown reaches new heights on the rooftop, with sparkling wine and small plates against uninterrupted skyline views.",
+  },
+  {
+    title: "In-Suite Dining",
+    desc: "As the evening settles, the in-house kitchen brings a candlelit dinner to your suite — a seasonal menu, plated and served in private.",
+  },
+];
+
+/** Active unit slugs for `generateStaticParams` (best effort; [] on error). */
+export async function getUnitSlugs(): Promise<string[]> {
+  try {
+    const rooms = await prisma.room.findMany({
+      where: { active: true },
+      select: { slug: true },
+    });
+    return rooms.map((r) => r.slug);
+  } catch (err) {
+    console.error("[getUnitSlugs] returning none:", err);
+    return [];
+  }
+}
+
+/** A single unit's detail, read from `crm.Room` by slug. `null` if not found. */
+export async function getUnitBySlug(slug: string): Promise<UnitDetailFull | null> {
+  try {
+    const r = await prisma.room.findFirst({ where: { slug, active: true } });
+    if (!r) return null;
+
+    const gallery = [r.featuredImage, ...r.images].filter(
+      (src): src is string => Boolean(src),
+    );
+
+    return {
+      slug: r.slug,
+      name: r.title,
+      category: categoryFor(r.bedrooms),
+      beds: r.bedrooms,
+      baths: r.bathrooms,
+      area: r.size,
+      bedConfig: `Sleeps up to ${r.sleeps} guest${r.sleeps === 1 ? "" : "s"}.${
+        r.extraBed ? " Extra bed available." : ""
+      }`,
+      details: r.description,
+      highlights: DEFAULT_HIGHLIGHTS,
+      gallery: gallery.length > 0 ? gallery : [FALLBACK_IMAGE],
+      priceFrom: `${formatNaira(r.priceFrom)} / night`,
+      amenities: servicesToAmenities(r.services),
+    };
+  } catch (err) {
+    console.error(`[getUnitBySlug:${slug}] error:`, err);
+    return null;
   }
 }

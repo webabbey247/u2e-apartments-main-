@@ -9,10 +9,15 @@ import { AmenitiesChecklist } from "@/components/units/amenities-checklist";
 import { ReservationCta } from "@/components/units/reservation-cta";
 import { SuitesListing } from "@/components/accommodation/suites-listing";
 import { SocialMediaMarquee } from "@/components/home/social-marquee";
-import { getUnit, UNIT_SLUGS, UNIT_AMENITIES } from "@/lib/content/units";
+import { getUnitBySlug, getUnitSlugs } from "@/lib/queries/rooms";
 
-export function generateStaticParams() {
-  return UNIT_SLUGS.map((unitSlug) => ({ unitSlug }));
+// Revalidate the CRM-backed unit periodically (ISR); render unknown-at-build
+// slugs on demand.
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const slugs = await getUnitSlugs();
+  return slugs.map((unitSlug) => ({ unitSlug }));
 }
 
 export async function generateMetadata({
@@ -21,7 +26,7 @@ export async function generateMetadata({
   params: Promise<{ unitSlug: string }>;
 }): Promise<Metadata> {
   const { unitSlug } = await params;
-  const unit = getUnit(unitSlug);
+  const unit = await getUnitBySlug(unitSlug);
   if (!unit) return { title: "Unit not found — U2E Apartments" };
   return {
     title: `${unit.name} — U2E Apartments`,
@@ -35,7 +40,7 @@ export default async function UnitDetailPage({
   params: Promise<{ unitSlug: string }>;
 }) {
   const { unitSlug } = await params;
-  const unit = getUnit(unitSlug);
+  const unit = await getUnitBySlug(unitSlug);
   if (!unit) notFound();
 
   return (
@@ -46,7 +51,7 @@ export default async function UnitDetailPage({
             → image slider → reservation → related suites → instagram → footer */}
         <UnitHero unit={unit} />
         <RoomDetailsInfo unit={unit} />
-        <AmenitiesChecklist amenities={UNIT_AMENITIES} />
+        <AmenitiesChecklist amenities={unit.amenities} />
         <ImageSlider images={unit.gallery} name={unit.name} />
         {/* <ReservationCta unit={unit} /> */}
         {/* <SuitesListing /> */}
