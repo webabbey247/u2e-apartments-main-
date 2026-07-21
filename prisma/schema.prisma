@@ -152,6 +152,32 @@ model Room {
   @@schema("crm")
 }
 
+enum SocialSource {
+  INSTAGRAM
+  TIKTOK
+
+  @@schema("crm")
+}
+
+/// Social feed posts shown in the home-page marquee. Mirrors `crm.SocialPost`.
+/// The per-platform profile link lives on the `SocialMedia` singleton, so a post
+/// only carries an optional deep link to itself.
+model SocialPost {
+  id        String       @id @default(cuid())
+  source    SocialSource @default(INSTAGRAM)
+  image     String
+  caption   String       @default("")
+  postUrl   String?
+  sortOrder Int          @default(0)
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([source])
+  @@index([active])
+  @@schema("crm")
+}
+
 /// Menu categories authored in the CRM. Mirrors `crm.MenuCategory` — read to
 /// group and order the full menu listing.
 model MenuCategory {

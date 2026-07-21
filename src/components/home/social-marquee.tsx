@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { SOCIAL, type SocialSource } from "@/lib/content/home";
+import { useSiteConfig } from "@/components/providers/site-config-provider";
 import { RevealHeading } from "@/components/ui/reveal-heading";
 
 function SourceIcon({ source, className = "h-7 w-7" }: { source: SocialSource; className?: string }) {
@@ -72,7 +73,10 @@ const SCATTER: {
  * hover; the track pauses on hover. Reduced-motion → static row.
  */
 export function SocialMediaMarquee() {
-  const track = [...SOCIAL.posts, ...SOCIAL.posts];
+  // Posts + profile links both come from the CRM via the site-config context —
+  // the section appears on 9 pages, so context beats prop-drilling from each.
+  const { socialPosts, socials } = useSiteConfig();
+  const track = [...socialPosts, ...socialPosts];
   return (
     <section className="relative overflow-hidden bg-brand py-24 md:py-32">
       {/* Decorative scattered social icons behind the content. */}
@@ -106,8 +110,10 @@ export function SocialMediaMarquee() {
         <div className="sm-track flex shrink-0 gap-4 pr-4">
           {track.map((post, i) => (
             <a
-              key={i}
-              href={SOCIAL.links[post.source]}
+              // The track is the post list duplicated for a seamless loop, so the
+              // index disambiguates the two copies of each post.
+              key={`${post.key}-${i}`}
+              href={post.postUrl || socials[post.source]}
               target="_blank"
               rel="noreferrer"
               aria-label={`View on ${post.source}`}
@@ -115,7 +121,7 @@ export function SocialMediaMarquee() {
             >
               <Image
                 src={post.src}
-                alt={`U2E Apartments on ${post.source}`}
+                alt={post.caption || `U2E Apartments on ${post.source}`}
                 fill
                 sizes="288px"
                 className="object-cover"

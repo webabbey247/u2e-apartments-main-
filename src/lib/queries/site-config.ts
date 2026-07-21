@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { CONTACT_PHONE } from "@/lib/content/home";
 import { CONTACT_DETAILS, CONTACT_MAP_EMBED } from "@/lib/content/contact";
+import { SOCIAL, type SocialSource } from "@/lib/content/home";
 
 export type SocialLinks = {
   facebook: string;
@@ -16,6 +17,16 @@ export type BankAccount = {
   accountNumber: string;
 };
 
+/** A card in the home-page social marquee. */
+export type SocialPost = {
+  key: string;
+  src: string;
+  source: SocialSource;
+  caption: string;
+  /** Deep link to the post itself; null → fall back to the profile link. */
+  postUrl: string | null;
+};
+
 export type SiteConfig = {
   phone: string;
   email: string;
@@ -23,6 +34,7 @@ export type SiteConfig = {
   mapUrl: string;
   socials: SocialLinks;
   bankAccounts: BankAccount[];
+  socialPosts: SocialPost[];
 };
 
 /** Static fallback so the site always renders even if the CRM config is empty. */
@@ -38,23 +50,37 @@ const FALLBACK: SiteConfig = {
     tiktok: "https://tiktok.com",
   },
   bankAccounts: [],
+  socialPosts: SOCIAL.posts.map((p, i) => ({
+    key: `static-${i}`,
+    src: p.src,
+    source: p.source,
+    caption: "U2E Apartments",
+    postUrl: null,
+  })),
 };
 
 /**
  * Site-wide configuration read from the CRM: contact info + map (`crm.ContactInfo`,
  * singleton), social links (`crm.SocialMedia`, singleton), and bank accounts
- * (`crm.BankAccount`, non-archived). Falls back to static defaults per-field so
- * the chrome always renders.
+ * (`crm.BankAccount`, non-archived), and the social marquee feed (`crm.SocialPost`,
+ * active, capped at 10). Falls back to static defaults per-field so the chrome
+ * always renders.
  */
 export async function getSiteConfig(): Promise<SiteConfig> {
   try {
-    const [contact, social, banks] = await Promise.all([
+    const [contact, social, banks, posts] = await Promise.all([
       prisma.contactInfo.findFirst({ orderBy: { updatedAt: "desc" } }),
       prisma.socialMedia.findFirst({ orderBy: { updatedAt: "desc" } }),
       prisma.bankAccount.findMany({
         where: { archived: false },
         orderBy: { createdAt: "asc" },
         select: { bankName: true, accountName: true, accountNumber: true },
+      }),
+      prisma.socialPost.findMany({
+        where: { active: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        take: 10,
+        select: { id: true, source: true, image: true, caption: true, postUrl: true },
       }),
     ]);
 
@@ -70,6 +96,16 @@ export async function getSiteConfig(): Promise<SiteConfig> {
         tiktok: social?.tiktok || FALLBACK.socials.tiktok,
       },
       bankAccounts: banks,
+      socialPosts:
+        posts.length > 0
+          ? posts.map((p) => ({
+              key: p.id,
+              src: p.image,
+              source: p.source === "TIKTOK" ? ("tiktok" as const) : ("instagram" as const),
+              caption: p.caption,
+              postUrl: p.postUrl,
+            }))
+          : FALLBACK.socialPosts,
     };
   } catch (err) {
     console.error("[getSiteConfig] falling back to static config:", err);
