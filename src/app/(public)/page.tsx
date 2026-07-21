@@ -1,7 +1,7 @@
 import { Preloader } from "@/components/home/preloader";
 import { Navbar } from "@/components/layout/navbar";
 import { Hero } from "@/components/home/hero";
-import { Marquee } from "@/components/home/marquee";
+// import { Marquee } from "@/components/home/marquee";
 import { About } from "@/components/home/about";
 import { Experiences } from "@/components/home/experiences";
 // import { RoomsSlider } from "@/components/home/rooms-slider";
@@ -45,7 +45,7 @@ export default async function HomePage() {
       <Navbar />
       <main>
         <Hero />
-        <Marquee images={marqueeImages} />
+        {/* <Marquee images={marqueeImages} /> */}
         <About />
         <Experiences items={experiences} />
          <Villas items={villas} />
