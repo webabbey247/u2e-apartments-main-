@@ -56,7 +56,7 @@ export function Preloader() {
   return (
     <div
       ref={rootRef}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-ink"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-brand"
       aria-hidden
     >
       <div ref={lettersRef} className="flex overflow-hidden">
