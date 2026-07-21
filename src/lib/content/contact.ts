@@ -10,7 +10,7 @@ export const CONTACT_HERO = {
   eyebrow: "Contact",
   title: "Get in Touch",
   body: "Questions about a stay, an event, or dining — or something you'd like to share? We'd love to hear from you.",
-  image: `${CDN}/69ecbc33e41c6d1524aa53fd_contact%20(1).webp`,
+  image: `/assets/u2e-contact-us-hero.webp`,
 } as const;
 
 export const CONTACT_DETAILS = {

@@ -35,7 +35,7 @@ export default async function MeetingsEventsPage() {
         <EventOccasions />
         {/* <EventSpaces /> */}
         <UpcomingEvents items={events} />
-        <RoomsSlider items={villas} />
+        {/* <RoomsSlider items={villas} /> */}
         {/* <EnquiryForm /> */}
         <SocialMediaMarquee />
       </main>

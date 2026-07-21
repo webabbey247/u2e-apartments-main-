@@ -11,7 +11,7 @@ export const EVENTS_HERO = {
   eyebrow: "Meetings & Events",
   title: "Meetings & Events",
   body: "Whatever your vision, U2E has the space to make it a reality — flexible indoor rooms, a rooftop terrace, gardens, and poolside settings, all with full service.",
-  image: `${CDN}/69ec54ef14d9212aaa11c8fd_meeting.webp`,
+  image: `/assets/u2e-meeting-events-hero.webp`,
 } as const;
 
 export const EVENTS_INTRO = {

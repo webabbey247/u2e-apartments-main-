@@ -18,7 +18,7 @@ export function EventsHero() {
     <section className="relative flex h-[80vh] min-h-[560px] w-full items-end overflow-hidden">
       <div ref={scaleRef} className="absolute inset-0">
         <Image
-          src="/assets/home-hero-banner.webp"
+          src={EVENTS_HERO.image}
           alt="U2E Apartments meetings and events"
           fill
           priority

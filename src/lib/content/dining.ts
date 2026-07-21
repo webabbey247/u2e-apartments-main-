@@ -21,7 +21,7 @@ export const DINING_FEATURE = {
   title: "Every Plate, Made With Intention",
   body: "Led by our head chef, The U2E Kitchen brings you an intimate dining experience where comfort classics meet contemporary flavor — paired with a thoughtful wine list and handcrafted cocktails.",
   cta: { label: "Reserve a Table", href: "/contact" },
-  image: `/assets/dinning/dinning-gallery-4.webp`,
+  image: `/assets/u2e-dinning-intro.webp`,
 } as const;
 
 export const RESTAURANT_MENU = {
