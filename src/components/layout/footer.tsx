@@ -48,8 +48,8 @@ Serviced apartments, dining, wellness, and event spaces — all at one address. 
             href={`tel:${phone.replace(/\s+/g, "")}`}
             className="mt-5 inline-block font-montserrat text-sm text-paper/70 transition-colors duration-300 ease-brand hover:text-paper"
           >
-            {phone}, <br/>
-            {email},
+            {phone} <br/>
+            {email}
           </a>
         </div>
 
