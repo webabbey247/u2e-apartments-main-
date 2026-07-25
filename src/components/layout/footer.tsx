@@ -10,7 +10,7 @@ import { useSiteConfig } from "@/components/providers/site-config-provider";
  * "Follow" links come from the CRM site config.
  */
 export function Footer() {
-  const { phone, socials } = useSiteConfig();
+  const { phone,email, socials } = useSiteConfig();
   const followLinks = (
     [
       { label: "Instagram", href: socials.instagram },
@@ -48,7 +48,8 @@ Serviced apartments, dining, wellness, and event spaces — all at one address. 
             href={`tel:${phone.replace(/\s+/g, "")}`}
             className="mt-5 inline-block font-montserrat text-sm text-paper/70 transition-colors duration-300 ease-brand hover:text-paper"
           >
-            {phone}
+            {phone}, <br/>
+            {email},
           </a>
         </div>
 
