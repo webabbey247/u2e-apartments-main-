@@ -1,5 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { categoryFor } from "@/lib/queries/rooms";
+import { nightsBetween } from "@/schemas/booking";
 
 /** A published review shown on the room page. */
 export type PublicReview = {
@@ -24,8 +26,19 @@ export type ReviewSummary = {
  */
 export async function getApprovedReviews(roomSlug: string): Promise<ReviewSummary> {
   try {
+    // A review is reservation-level; show it on every room that reservation
+    // booked (via ReservationRoom), plus any review stored with this slug.
+    const booked = await prisma.reservationRoom.findMany({
+      where: { roomSlug },
+      select: { reservationNumber: true },
+    });
+    const numbers = Array.from(new Set(booked.map((b) => b.reservationNumber)));
+
     const rows = await prisma.review.findMany({
-      where: { roomSlug, status: "APPROVED" },
+      where: {
+        status: "APPROVED",
+        OR: [{ reservationNumber: { in: numbers } }, { roomSlug }],
+      },
       orderBy: { createdAt: "desc" },
       select: { id: true, guestName: true, rating: true, body: true, createdAt: true },
     });
@@ -51,12 +64,97 @@ export async function getApprovedReviews(roomSlug: string): Promise<ReviewSummar
 }
 
 /**
+ * The stay itself, shaped for the summary card shown beside the review form —
+ * the same fields the booking modal's sticky summary shows.
+ */
+export type ReservationSummary = {
+  reservationNumber: string;
+  /** Room-type name, or "N rooms" when the reservation spans several. */
+  title: string;
+  /** Room category line under the title, when there's exactly one room type. */
+  category: string | null;
+  /** "2 × Two Bedroom, One Bedroom" */
+  roomsLabel: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  guests: number;
+  guestName: string;
+  email: string;
+  /** Dial code + number, already joined. */
+  phone: string | null;
+  /** Total paid, in naira. */
+  amount: number;
+};
+
+/**
  * Result of resolving a reservation number for the review form. `ok` gates the
  * form; the messages distinguish "not found" from "already reviewed".
  */
 export type ReviewEligibility =
-  | { ok: true; reservationNumber: string }
+  | { ok: true; reservationNumber: string; reservation: ReservationSummary }
   | { ok: false; reason: "not_found" | "not_available" | "already_reviewed" };
+
+/** The reservation row shape `summarize` needs. */
+type ReservationRow = {
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  name: string;
+  email: string;
+  dialCode: string | null;
+  phone: string | null;
+  amount: number;
+  rooms: { roomSlug: string; qty: number }[];
+};
+
+/**
+ * Turn a stored reservation into the summary-card payload, resolving room slugs
+ * to their live CRM titles (and falling back to the slug if a room was retired).
+ */
+async function summarize(
+  reservationNumber: string,
+  r: ReservationRow,
+): Promise<ReservationSummary> {
+  const catalogue = await prisma.room.findMany({
+    where: { slug: { in: r.rooms.map((x) => x.roomSlug) } },
+    select: { slug: true, title: true, bedrooms: true },
+  });
+  const bySlug = new Map(catalogue.map((c) => [c.slug, c]));
+
+  const lines = r.rooms.map((x) => {
+    const room = bySlug.get(x.roomSlug);
+    return {
+      title: room?.title ?? x.roomSlug,
+      category: room ? categoryFor(room.bedrooms) : null,
+      qty: x.qty,
+    };
+  });
+  const totalRooms = lines.reduce((n, l) => n + l.qty, 0);
+
+  return {
+    reservationNumber,
+    title:
+      lines.length === 0
+        ? "Your Stay"
+        : lines.length === 1
+          ? lines[0].title
+          : `${totalRooms} rooms`,
+    category: lines.length === 1 ? lines[0].category : null,
+    roomsLabel:
+      lines.length === 0
+        ? "—"
+        : lines.map((l) => (l.qty > 1 ? `${l.qty} × ${l.title}` : l.title)).join(", "),
+    checkIn: r.checkIn,
+    checkOut: r.checkOut,
+    nights: nightsBetween(r.checkIn, r.checkOut),
+    guests: r.guests,
+    guestName: r.name,
+    email: r.email,
+    phone: r.phone ? `${r.dialCode ?? ""} ${r.phone}`.trim() : null,
+    amount: r.amount,
+  };
+}
 
 /**
  * Can this reservation number leave a review? Requires a CONFIRMED reservation
@@ -69,7 +167,19 @@ export async function checkReviewEligibility(
   try {
     const reservation = await prisma.booking.findFirst({
       where: { reservationNumber, status: "CONFIRMED" },
-      select: { id: true, isReviewAvailable: true },
+      select: {
+        id: true,
+        isReviewAvailable: true,
+        checkIn: true,
+        checkOut: true,
+        guests: true,
+        name: true,
+        email: true,
+        dialCode: true,
+        phone: true,
+        amount: true,
+        rooms: { select: { roomSlug: true, qty: true } },
+      },
     });
     if (!reservation) return { ok: false, reason: "not_found" };
     if (!reservation.isReviewAvailable) return { ok: false, reason: "not_available" };
@@ -80,7 +190,11 @@ export async function checkReviewEligibility(
     });
     if (existing) return { ok: false, reason: "already_reviewed" };
 
-    return { ok: true, reservationNumber };
+    return {
+      ok: true,
+      reservationNumber,
+      reservation: await summarize(reservationNumber, reservation),
+    };
   } catch (err) {
     console.error(`[checkReviewEligibility:${reservationNumber}] error:`, err);
     return { ok: false, reason: "not_found" };

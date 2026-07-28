@@ -44,19 +44,11 @@ function StarPicker({ value, onChange }: { value: number; onChange: (n: number) 
 }
 
 /**
- * Guest review form. `reservationNumber` and `roomSlug`/`roomTitle` are fixed by
- * the route (the reservation is already verified server-side); the guest only
- * supplies name, rating, and their words. Submits PENDING for CRM moderation.
+ * Guest review form. Reservation-level (the reservation is verified server-side
+ * and may span multiple rooms); the guest supplies name, rating, and their
+ * words. Submits PENDING for CRM moderation.
  */
-export function ReviewForm({
-  reservationNumber,
-  roomSlug,
-  roomTitle,
-}: {
-  reservationNumber: string;
-  roomSlug: string;
-  roomTitle: string;
-}) {
+export function ReviewForm({ reservationNumber }: { reservationNumber: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const {
@@ -67,7 +59,7 @@ export function ReviewForm({
     formState: { errors, isSubmitting },
   } = useForm<ReviewInput>({
     resolver: zodResolver(reviewSchema),
-    defaultValues: { reservationNumber, roomSlug, roomTitle, guestName: "", rating: 0, body: "" },
+    defaultValues: { reservationNumber, guestName: "", rating: 0, body: "" },
   });
 
   const rating = watch("rating");
@@ -106,10 +98,10 @@ export function ReviewForm({
   return (
     <div className="rounded-2xl bg-mist p-8 md:p-10">
       <p className="mb-4 font-montserrat text-xs uppercase tracking-[0.3em] text-brand">
-        {roomTitle}
+        Your Stay
       </p>
       <RevealHeading className="font-cinzel text-3xl leading-tight text-ink md:text-4xl">
-        Share Your Stay
+        Share Your Experience
       </RevealHeading>
       <p className="mt-3 font-lato text-sm text-ink/60">
         Reservation <span className="font-semibold text-ink/80">{reservationNumber}</span>

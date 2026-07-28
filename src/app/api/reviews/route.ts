@@ -6,9 +6,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/reviews — guest review submission. Reservation-number gated: the
- * number must belong to a CONFIRMED reservation and not already be reviewed.
- * Created PENDING; the CRM moderates it before it appears on the room page.
+ * POST /api/reviews — guest review submission (reservation-level, may span
+ * multiple rooms). Gated: the reservation must be CONFIRMED, review-eligible
+ * (`isReviewAvailable`), and not already reviewed. The reviewed room(s) are
+ * derived from the reservation. Created PENDING for CRM moderation.
  */
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -30,12 +31,18 @@ export async function POST(req: NextRequest) {
   try {
     const reservation = await prisma.booking.findFirst({
       where: { reservationNumber: data.reservationNumber, status: "CONFIRMED" },
-      select: { id: true },
+      select: { id: true, isReviewAvailable: true, rooms: { select: { roomSlug: true } } },
     });
     if (!reservation) {
       return NextResponse.json(
         { error: "No confirmed reservation found for that number." },
         { status: 404 },
+      );
+    }
+    if (!reservation.isReviewAvailable) {
+      return NextResponse.json(
+        { error: "Reviews open after your stay is complete." },
+        { status: 403 },
       );
     }
 
@@ -50,7 +57,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await prisma.review.create({ data });
+    // Derive the reviewed room(s) from the reservation's booked rooms.
+    const slugs = Array.from(new Set(reservation.rooms.map((r) => r.roomSlug)));
+    const rooms = slugs.length
+      ? await prisma.room.findMany({ where: { slug: { in: slugs } }, select: { slug: true, title: true } })
+      : [];
+    const roomSlug = rooms[0]?.slug ?? slugs[0] ?? "";
+    const roomTitle = rooms.map((r) => r.title).join(", ");
+
+    await prisma.review.create({ data: { ...data, roomSlug, roomTitle } });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/reviews]", err);

@@ -149,7 +149,7 @@ function servicesToAmenities(services: string[]): Amenity[] {
   }));
 }
 
-function categoryFor(bedrooms: number): string {
+export function categoryFor(bedrooms: number): string {
   if (bedrooms === 0) return "Studio";
   if (bedrooms >= 3) return "Residence";
   return "Suite";
