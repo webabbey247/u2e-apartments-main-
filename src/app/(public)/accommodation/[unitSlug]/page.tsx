@@ -8,8 +8,10 @@ import { ImageSlider } from "@/components/units/image-slider";
 import { AmenitiesChecklist } from "@/components/units/amenities-checklist";
 import { ReservationCta } from "@/components/units/reservation-cta";
 import { SuitesListing } from "@/components/accommodation/suites-listing";
+import { ReviewsSection } from "@/components/reviews/reviews-section";
 import { SocialMediaMarquee } from "@/components/home/social-marquee";
 import { getUnitBySlug, getUnitSlugs } from "@/lib/queries/rooms";
+import { getApprovedReviews } from "@/lib/queries/reviews";
 
 // Revalidate the CRM-backed unit periodically (ISR); render unknown-at-build
 // slugs on demand.
@@ -43,16 +45,19 @@ export default async function UnitDetailPage({
   const unit = await getUnitBySlug(unitSlug);
   if (!unit) notFound();
 
+  const reviews = await getApprovedReviews(unit.slug);
+
   return (
     <>
       <Navbar />
       <main>
         {/* Order follows the template: hero(image+specs) → details → amenities
-            → image slider → reservation → related suites → instagram → footer */}
+            → image slider → reviews → reservation → related suites → instagram → footer */}
         <UnitHero unit={unit} />
         <RoomDetailsInfo unit={unit} />
         <AmenitiesChecklist amenities={unit.amenities} />
         <ImageSlider images={unit.gallery} name={unit.name} />
+        <ReviewsSection summary={reviews} />
         {/* <ReservationCta unit={unit} /> */}
         {/* <SuitesListing /> */}
         <SocialMediaMarquee />

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FOOTER } from "@/lib/content/home";
 import { useSiteConfig } from "@/components/providers/site-config-provider";
+import { useBookingModal } from "@/components/providers/booking-modal-provider";
 
 /**
  * Global footer — CTA band on top, link columns with the default↔active hover
@@ -11,6 +12,7 @@ import { useSiteConfig } from "@/components/providers/site-config-provider";
  */
 export function Footer() {
   const { phone,email, socials } = useSiteConfig();
+  const { openBooking } = useBookingModal();
   const followLinks = (
     [
       { label: "Instagram", href: socials.instagram },
@@ -30,12 +32,13 @@ export function Footer() {
         <h2 className="mx-auto mt-5 max-w-3xl font-cinzel text-4xl leading-tight md:text-6xl">
 Your Next Great Stay Starts Here        
 </h2>
-        <Link
-          href="/accommodation"
+        <button
+          type="button"
+          onClick={() => openBooking()}
           className="mt-9 inline-flex rounded-full bg-brand px-8 py-4 font-montserrat text-xs font-semibold uppercase tracking-[0.15em] text-paper transition-all duration-500 ease-brand hover:bg-brand/90"
         >
         Book Your Stay Today
-        </Link>
+        </button>
       </div>
 
       {/* Columns */}
@@ -61,12 +64,23 @@ Serviced apartments, dining, wellness, and event spaces — all at one address. 
             <ul className="mt-5 space-y-3">
               {col.links.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-lato text-sm text-paper/70 transition-colors duration-300 ease-brand hover:text-paper"
-                  >
-                    {link.label}
-                  </Link>
+                  {link.label === "Book a Stay" ? (
+                    // Opens the booking modal instead of navigating to a page.
+                    <button
+                      type="button"
+                      onClick={() => openBooking()}
+                      className="font-lato text-sm text-paper/70 transition-colors duration-300 ease-brand hover:text-paper"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link
+                      href={link.href}
+                      className="font-lato text-sm text-paper/70 transition-colors duration-300 ease-brand hover:text-paper"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

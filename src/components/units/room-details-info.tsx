@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useMoveY } from "@/hooks/use-animations";
-import { BookingModal } from "@/components/booking/booking-modal";
+import { useBookingModal } from "@/components/providers/booking-modal-provider";
 import type { UnitDetailFull } from "@/lib/queries/rooms";
 
 function Highlight({ title, desc }: { title: string; desc: string }) {
@@ -22,7 +21,7 @@ function Highlight({ title, desc }: { title: string; desc: string }) {
  */
 export function RoomDetailsInfo({ unit }: { unit: UnitDetailFull }) {
   const detailsRef = useMoveY<HTMLDivElement>();
-  const [reserveOpen, setReserveOpen] = useState(false);
+  const { openBooking } = useBookingModal();
 
   return (
     <section className="bg-paper px-6 py-20 md:px-10 md:py-28">
@@ -35,7 +34,7 @@ export function RoomDetailsInfo({ unit }: { unit: UnitDetailFull }) {
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
             <button
               type="button"
-              onClick={() => setReserveOpen(true)}
+              onClick={() => openBooking(unit)}
               className="group inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-montserrat text-xs font-semibold uppercase tracking-[0.12em] text-paper transition-all duration-500 ease-brand hover:gap-3 hover:bg-brand/90"
             >
               <span>Check Availability</span>
@@ -54,8 +53,6 @@ export function RoomDetailsInfo({ unit }: { unit: UnitDetailFull }) {
           ))}
         </div>
       </div>
-
-      <BookingModal unit={unit} open={reserveOpen} onClose={() => setReserveOpen(false)} />
     </section>
   );
 }

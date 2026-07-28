@@ -5,16 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   bookingSchema,
-  step1Fields,
-  step2Fields,
-  step3Fields,
+  dateFields,
+  detailsFields,
+  termsFields,
   STEP_NAMES,
   nightsBetween,
   nextDayISO,
   formatNaira,
   type BookingForm,
 } from "@/schemas/booking";
-import type { UnitDetailFull } from "@/lib/queries/rooms";
+import type { UnitDetailFull, BookableRoom } from "@/lib/queries/rooms";
+import { useBookableRooms } from "@/hooks/use-bookable-rooms";
 import { useSiteConfig } from "@/components/providers/site-config-provider";
 import { DateField } from "@/components/ui/date-field";
 import { DialCodePicker } from "@/components/ui/dial-code-picker";
@@ -25,8 +26,6 @@ import { cn } from "@/lib/utils/cn";
 // Shared field styling so every input matches.
 const inputCls =
   "w-full box-border rounded-sm border border-brand/30 bg-paper px-3.5 py-3 font-lato text-[14px] text-ink outline-none transition-colors duration-300 ease-brand focus:border-brand";
-const readonlyCls =
-  "w-full box-border rounded-sm border border-brand/25 bg-mist px-3.5 py-3 font-lato text-[14px] text-ink/65 outline-none";
 const labelCls =
   "mb-2 block font-montserrat text-[11px] uppercase tracking-[0.1em] text-ink/55";
 const primaryBtn =
@@ -36,6 +35,40 @@ const ghostBtn =
 const errCls = "mt-1.5 font-lato text-[12px] text-brand";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
+
+/** A bookable room enriched with availability + the guest's per-room choices. */
+type RoomLine = BookableRoom & {
+  unitsLeft: number;
+  qty: number; // 0 = not booked, up to unitsLeft
+  guests: number; // party in this room line
+  addExtraBed: boolean;
+  extraBeds: number;
+};
+
+// Small round stepper button used throughout the wizard.
+function StepBtn({
+  sign,
+  onClick,
+  disabled,
+  label,
+}: {
+  sign: "−" | "+";
+  onClick: () => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full border border-brand/40 bg-paper text-[16px] leading-none text-brand transition-colors duration-300 ease-brand hover:border-brand disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {sign}
+    </button>
+  );
+}
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
@@ -49,34 +82,53 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Booking wizard modal — ports the event site's `BookingModal`: a full-screen,
- * 5-step flow (Dates → Details → Review → Payment → Confirmed) with a sticky
- * reservation summary. Zod + react-hook-form validate per step. Room/pricing
- * come from the CRM unit; bank details from the CRM site config.
+ * Booking wizard modal — a full-screen, 5-step flow:
+ *   1 Availability → dates only; checks which room types are free
+ *   2 Rooms        → a row per available type with quantity, guests, extra bed
+ *   3 Details      → guest info + terms (the sticky summary replaces a Review step)
+ *   4 Payment → 5 Confirmed
+ * A single reservation can hold multiple room types (e.g. a 2BR + a 3BR). Room
+ * pricing comes from the CRM; bank details from the CRM site config.
  */
 export function BookingModal({
   unit,
   open,
   onClose,
 }: {
-  unit: UnitDetailFull;
+  /** Pre-selected room (from a room page). Omit for a plain "Book a Stay" start. */
+  unit?: UnitDetailFull;
   open: boolean;
   onClose: () => void;
 }) {
   const { bankAccounts } = useSiteConfig();
-  // Only fetch the country list while the modal is actually open.
   const dialCodes = useDialCodes({ enabled: open });
+  const roomsQuery = useBookableRooms({ enabled: open });
+
   const [step, setStep] = useState(1);
   const [method, setMethod] = useState<"card" | "transfer">("card");
-  // Receipt goes straight to UploadThing; we keep the returned URL to persist
-  // onto the booking when the BFF route lands (Phase 5/6).
   const [receipt, setReceipt] = useState<UploadedReceipt | null>(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reference, setReference] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [availabilityMsg, setAvailabilityMsg] = useState<
     { kind: "error" | "ok"; text: string } | null
   >(null);
+  // Rooms that have availability for the chosen dates, with the guest's choices.
+  // Empty until step 1's availability check runs.
+  const [lines, setLines] = useState<RoomLine[]>([]);
+  // Every room's verdict for the step-1 list (available + sold-out).
+  const [availResults, setAvailResults] = useState<
+    { slug: string; name: string; category: string; priceValue: number; unitsLeft: number }[]
+  >([]);
+  const [availabilityDone, setAvailabilityDone] = useState(false);
+  // Single = one room type only; Multiple = mix room types (e.g. a 2BR + a 3BR).
+  const [bookingType, setBookingType] = useState<"single" | "multiple">("single");
+  // Guest Details: email is checked first; a hit pre-fills name/company, and
+  // reveals the name/company row. Continue then creates/updates the customer.
+  const [customerChecked, setCustomerChecked] = useState(false);
+  const [customerExists, setCustomerExists] = useState(false);
+  const [customerLoading, setCustomerLoading] = useState(false);
 
   const {
     register,
@@ -91,9 +143,6 @@ export function BookingModal({
     defaultValues: {
       checkIn: "",
       checkOut: "",
-      guests: 1,
-      extraBed: false,
-      extraBeds: 1,
       name: "",
       email: "",
       dialCode: "+234",
@@ -112,8 +161,17 @@ export function BookingModal({
     setMethod("card");
     setReceipt(null);
     setUploadingReceipt(false);
+    setSubmitting(false);
     setReference(null);
+    setSubmitError(null);
     setAvailabilityMsg(null);
+    setLines([]);
+    setAvailResults([]);
+    setAvailabilityDone(false);
+    setBookingType("single");
+    setCustomerChecked(false);
+    setCustomerExists(false);
+    setCustomerLoading(false);
     reset();
   }, [open, reset]);
 
@@ -131,81 +189,251 @@ export function BookingModal({
     };
   }, [open, onClose]);
 
-  // A prior verdict is stale once the stay or party size changes.
+  // A prior availability verdict is stale once the stay changes.
   useEffect(() => {
     setAvailabilityMsg(null);
-  }, [values.checkIn, values.checkOut, values.guests]);
+    setAvailabilityDone(false);
+    setLines([]);
+    setAvailResults([]);
+  }, [values.checkIn, values.checkOut]);
 
-  // Derived from the verdict, so it clears automatically whenever the stay or
-  // party size changes (the effect above resets the message).
-  const availabilityConfirmed = availabilityMsg?.kind === "ok";
-
-  // Party size is capped at the unit's real capacity from the CRM.
-  const maxGuests = unit.sleeps || 12;
-  const guests = Number(values.guests) || 1;
-  const extraBed = !!values.extraBed;
-  const extraBeds = Number(values.extraBeds) || 1;
+  // Editing the email invalidates a prior lookup — re-hide the name/company row.
+  useEffect(() => {
+    setCustomerChecked(false);
+    setCustomerExists(false);
+  }, [values.email]);
 
   const nights = nightsBetween(values.checkIn, values.checkOut);
+
+  // The rooms actually being booked (quantity ≥ 1).
+  const activeLines = useMemo(() => lines.filter((l) => l.qty > 0), [lines]);
+  const totalRooms = activeLines.reduce((n, l) => n + l.qty, 0);
+  const totalGuests = activeLines.reduce((n, l) => n + l.guests, 0);
+
   const total = useMemo(() => {
-    // NOTE: display-only. A server-authoritative quote lands with the pricing
-    // engine (`POST /api/pricing/quote`) — the client must never set the charge.
-    const base = unit.priceValue * Math.max(nights, 1);
-    const beds = values.extraBed ? (values.extraBeds || 1) * unit.extraBedPrice : 0;
+    // Display-only; the server recomputes authoritatively on create.
+    const base = activeLines.reduce((s, l) => s + l.priceValue * l.qty, 0) * Math.max(nights, 1);
+    const beds = activeLines.reduce(
+      (s, l) => s + (l.addExtraBed ? l.extraBeds * l.extraBedPrice : 0),
+      0,
+    );
     return base + beds;
-  }, [unit.priceValue, unit.extraBedPrice, nights, values.extraBed, values.extraBeds]);
+  }, [activeLines, nights]);
+
+  // ── Per-line mutators (keep guests within each line's capacity) ──────────
+  const capacityOf = (l: RoomLine) => Math.max(1, l.sleeps * Math.max(l.qty, 1));
+  // Max extra beds = the room's DB max × the number of rooms booked.
+  const maxBedsOf = (l: RoomLine) => Math.max(1, l.extraBedMax * Math.max(l.qty, 1));
+  const patchLine = (slug: string, patch: Partial<RoomLine>) =>
+    setLines((ls) => ls.map((l) => (l.slug === slug ? { ...l, ...patch } : l)));
+
+  const setQty = (slug: string, qty: number) =>
+    setLines((ls) =>
+      ls.map((l) => {
+        if (l.slug !== slug) {
+          // Single booking → activating one room type clears the others.
+          return bookingType === "single" && qty > 0 ? { ...l, qty: 0, guests: 0 } : l;
+        }
+        const nextQty = Math.max(0, Math.min(l.unitsLeft, qty));
+        const cap = Math.max(1, l.sleeps * Math.max(nextQty, 1));
+        // Entering the booking → at least 1 guest; leaving → 0.
+        const guests = nextQty === 0 ? 0 : Math.min(Math.max(l.guests, 1), cap);
+        // Extra beds capped at the room's DB max × rooms booked.
+        const bedCap = Math.max(1, l.extraBedMax * Math.max(nextQty, 1));
+        const extraBeds = Math.max(1, Math.min(l.extraBeds, bedCap));
+        return { ...l, qty: nextQty, guests, extraBeds };
+      }),
+    );
+
+  // Switching to single collapses the selection to a single room type.
+  const changeBookingType = (t: "single" | "multiple") => {
+    setBookingType(t);
+    if (t === "single") {
+      setLines((ls) => {
+        const keep = ls.find((l) => l.qty > 0)?.slug;
+        return ls.map((l) => (l.slug === keep ? l : { ...l, qty: 0, guests: 0 }));
+      });
+    }
+  };
+  const setGuests = (slug: string, guests: number) =>
+    setLines((ls) =>
+      ls.map((l) =>
+        l.slug === slug ? { ...l, guests: Math.max(1, Math.min(capacityOf(l), guests)) } : l,
+      ),
+    );
 
   if (!open) return null;
 
-  /** Step 1 gate — confirm the unit is free for the dates and fits the party. */
-  const checkAvailability = async () => {
+  /**
+   * Step 1 gate — check every bookable room for the chosen dates and keep the
+   * ones with availability. Only those room types appear in step 2.
+   */
+  const runAvailability = async () => {
     setAvailabilityMsg(null);
     setSubmitting(true);
     try {
-      const qs = new URLSearchParams({
-        slug: unit.slug,
-        checkIn: values.checkIn,
-        checkOut: values.checkOut,
-        guests: String(values.guests),
-      });
-      const res = await fetch(`/api/availability?${qs}`);
-      const data = await res.json();
+      const catalogue = roomsQuery.data ?? [];
+      if (catalogue.length === 0) {
+        setAvailabilityMsg({ kind: "error", text: "Rooms are still loading — please try again." });
+        return false;
+      }
 
+      const results = await Promise.all(
+        catalogue.map(async (room) => {
+          const qs = new URLSearchParams({
+            slug: room.slug,
+            checkIn: values.checkIn,
+            checkOut: values.checkOut,
+          });
+          const res = await fetch(`/api/availability?${qs}`);
+          const data = await res.json();
+          if (!res.ok) return null;
+          return { room, unitsLeft: data.unitsLeft as number, available: data.available as boolean };
+        }),
+      );
+
+      const checked = results.filter(
+        (r): r is { room: BookableRoom; unitsLeft: number; available: boolean } => !!r,
+      );
+      // Keep every room's verdict for the step-1 list (success / sold-out).
+      setAvailResults(
+        checked.map(({ room, unitsLeft }) => ({
+          slug: room.slug,
+          name: room.name,
+          category: room.category,
+          priceValue: room.priceValue,
+          unitsLeft: Math.max(0, unitsLeft),
+        })),
+      );
+
+      const free = checked.filter((r) => r.available && r.unitsLeft > 0);
+
+      if (free.length === 0) {
+        setAvailabilityMsg({
+          kind: "error",
+          text: "Sorry — no rooms are available for those dates. Try different dates.",
+        });
+        setLines([]);
+        setAvailabilityDone(false);
+        return false;
+      }
+
+      // Seed lines: pre-select the room the guest came from (if free), else none.
+      const next: RoomLine[] = free.map(({ room, unitsLeft }) => {
+        const preselect = unit?.slug === room.slug;
+        return {
+          ...room,
+          unitsLeft,
+          qty: preselect ? 1 : 0,
+          guests: preselect ? Math.min(2, room.sleeps) : 0,
+          addExtraBed: false,
+          extraBeds: 1,
+        };
+      });
+      setLines(next);
+      setAvailabilityDone(true);
+      // No success banner — the available room types list below speaks for itself.
+      setAvailabilityMsg(null);
+      return true;
+    } catch {
+      setAvailabilityMsg({ kind: "error", text: "Could not check availability. Please try again." });
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  /** Look the email up; pre-fill + reveal the name/company row. */
+  const checkEmail = async (): Promise<void> => {
+    const ok = await trigger(["email"]);
+    if (!ok) return;
+    const email = (values.email || "").trim();
+    setCustomerLoading(true);
+    try {
+      const res = await fetch(`/api/customers?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (res.ok && data.found) {
+        setCustomerExists(true);
+        setValue("name", data.customer.name ?? "", { shouldValidate: true });
+        setValue("company", data.customer.company ?? "");
+        if (data.customer.dialCode) setValue("dialCode", data.customer.dialCode);
+        if (data.customer.phone) setValue("phone", data.customer.phone, { shouldValidate: true });
+      } else {
+        setCustomerExists(false);
+      }
+    } catch {
+      setCustomerExists(false); // treat as a new guest on lookup failure
+    } finally {
+      setCustomerChecked(true);
+      setCustomerLoading(false);
+    }
+  };
+
+  /** Persist the customer — create (new) or update (returning). */
+  const saveCustomer = async (): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/customers", {
+        method: customerExists ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: values.email,
+          name: values.name,
+          phone: values.phone,
+          dialCode: values.dialCode,
+          company: values.company || undefined,
+        }),
+      });
       if (!res.ok) {
-        // Prefer the specific field message over the generic "Invalid request".
+        const j = await res.json().catch(() => ({}));
+        setSubmitError(j.error || "Could not save your details. Please try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      setSubmitError("Could not save your details. Please try again.");
+      return false;
+    }
+  };
+
+  const createReservation = async (): Promise<boolean> => {
+    if (reference) return true; // already created — don't duplicate
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkIn: values.checkIn,
+          checkOut: values.checkOut,
+          bookingType,
+          rooms: activeLines.map((l) => ({
+            slug: l.slug,
+            qty: l.qty,
+            guests: l.guests,
+            extraBed: l.addExtraBed,
+            extraBeds: l.extraBeds,
+          })),
+          name: values.name,
+          email: values.email,
+          dialCode: values.dialCode,
+          phone: values.phone,
+          company: values.company || undefined,
+          agreedToTerms: values.agreedToTerms,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
         const detail = data?.details
           ? (Object.values(data.details).flat() as string[])[0]
           : undefined;
-        setAvailabilityMsg({
-          kind: "error",
-          text: detail ?? data?.error ?? "Could not check availability. Please try again.",
-        });
+        setSubmitError(detail ?? data?.error ?? "Could not create your booking. Please try again.");
         return false;
       }
-      if (!data.capacityOk) {
-        setAvailabilityMsg({
-          kind: "error",
-          text: `This unit sleeps up to ${data.maxGuests} guest${data.maxGuests === 1 ? "" : "s"}. Please reduce your party size or choose a larger unit.`,
-        });
-        return false;
-      }
-      if (!data.available) {
-        setAvailabilityMsg({
-          kind: "error",
-          text: "Sorry — this unit is fully booked for those dates. Try different dates.",
-        });
-        return false;
-      }
-      setAvailabilityMsg({
-        kind: "ok",
-        text: `${data.unitsLeft} of ${data.unitsTotal} unit${data.unitsTotal === 1 ? "" : "s"} available for your ${data.nights} night${data.nights === 1 ? "" : "s"}.`,
-      });
+      setReference(data.reservationNumber);
       return true;
     } catch {
-      setAvailabilityMsg({
-        kind: "error",
-        text: "Could not check availability. Please try again.",
-      });
+      setSubmitError("Could not create your booking. Please try again.");
       return false;
     } finally {
       setSubmitting(false);
@@ -213,33 +441,99 @@ export function BookingModal({
   };
 
   const next = async () => {
-    const fields =
-      step === 1 ? step1Fields : step === 2 ? step2Fields : step3Fields;
-    const ok = await trigger([...fields]);
-    if (!ok) return;
-    if (step === 1 && !availabilityConfirmed) {
-      // First press checks and reports the result — it never advances. The
-      // guest reviews the verdict, then presses Continue.
-      await checkAvailability();
+    if (step === 1) {
+      const ok = await trigger([...dateFields]);
+      if (!ok) return;
+      if (!availabilityDone) {
+        await runAvailability();
+        return; // first press checks; second press advances
+      }
+      setStep(2);
+      return;
+    }
+    if (step === 2) {
+      if (activeLines.length === 0) {
+        setSubmitError("Please add at least one room to continue.");
+        return;
+      }
+      setSubmitError(null);
+      setStep(3);
       return;
     }
     if (step === 3) {
-      // TODO(Phase 5): POST /api/bookings → returns a BKG-XXXXXX reference.
+      // Contact first. If the email hasn't been looked up yet, do that — it
+      // reveals (and pre-fills) the name/company row without advancing.
+      const okContact = await trigger(["email", "dialCode", "phone"]);
+      if (!okContact) return;
+      if (!customerChecked) {
+        await checkEmail();
+        return;
+      }
+      const okRest = await trigger(["name", ...termsFields]);
+      if (!okRest) return;
+
+      setSubmitError(null);
       setSubmitting(true);
-      await new Promise((r) => setTimeout(r, 600));
-      setReference(`BKG-${Math.floor(100000 + Math.random() * 900000)}`);
+      const saved = await saveCustomer();
       setSubmitting(false);
+      if (!saved) return;
+
+      const created = await createReservation();
+      if (!created) return;
+      setStep(4);
+      return;
     }
-    setStep((s) => Math.min(s + 1, 5));
   };
 
   const pay = async () => {
-    // TODO(Phase 6): Paystack checkout (card) / verify receipt (transfer).
+    // TODO(Phase 6): Paystack checkout (card). Record the chosen payment method
+    // + receipt; the booking stays PENDING until it's verified/confirmed.
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setSubmitting(false);
-    setStep(5);
+    try {
+      if (reference) {
+        await fetch(`/api/bookings/${encodeURIComponent(reference)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentMethod: method,
+            ...(method === "transfer" && receipt
+              ? { receiptUrl: receipt.url, receiptFileName: receipt.name }
+              : {}),
+          }),
+        });
+      }
+    } catch {
+      // Non-fatal: the reservation exists; payment can be reconciled later.
+    } finally {
+      setSubmitting(false);
+      setStep(5);
+    }
   };
+
+  const roomsLabel =
+    activeLines.length === 0
+      ? "—"
+      : activeLines.map((l) => (l.qty > 1 ? `${l.qty} × ${l.name}` : l.name)).join(", ");
+  const summaryTitle =
+    activeLines.length === 0
+      ? "Your Stay"
+      : activeLines.length === 1
+        ? activeLines[0].name
+        : `${totalRooms} rooms`;
+
+  // Registered once so the Guest Details email field can add an onBlur lookup
+  // without dropping react-hook-form's own onBlur (touched state).
+  const emailField = register("email");
+
+  const primaryLabel = submitting
+    ? step === 1
+      ? "Checking…"
+      : "Please wait…"
+    : step === 1
+      ? availabilityDone
+        ? "Continue"
+        : "Check Availability"
+      : "Continue";
 
   return (
     <div
@@ -248,7 +542,6 @@ export function BookingModal({
       aria-label="Book your stay"
       className="fixed inset-0 z-[300] overflow-y-auto bg-[url('/assets/accommodation-hero.jpg')] bg-cover bg-center"
     >
-      {/* Scrim — keeps the ink/brand copy legible over the photo. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 bg-mist/90 backdrop-blur-sm" />
 
       <div className="relative mx-auto w-full max-w-[1200px] px-6 py-10 md:px-10 md:py-14">
@@ -267,20 +560,18 @@ export function BookingModal({
           <span className="font-montserrat text-[12px] uppercase tracking-[0.25em] text-brand">
             Reserve
           </span>
-          <h2 className="mt-2 font-cinzel text-[30px] font-semibold text-ink">
-            Book Your Stay
-          </h2>
+          <h2 className="mt-2 font-cinzel text-[30px] font-semibold text-ink">Book Your Stay</h2>
         </div>
 
         <div className={cn("grid gap-10", step !== 5 && "lg:grid-cols-[minmax(0,1fr)_360px]")}>
           {/* LEFT — wizard */}
           <div className={step === 5 ? "mx-auto w-full max-w-[560px]" : "min-w-0"}>
             <div className="rounded-md border border-brand/25 bg-paper p-6 sm:p-11">
-              {/* STEP 1 — Dates & Room */}
+              {/* STEP 1 — Room Availability */}
               {step === 1 && (
                 <div>
                   <h3 className="mb-6 font-cinzel text-[22px] font-semibold text-ink">
-                    Dates &amp; Room
+                    Room Availability
                   </h3>
                   <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
@@ -293,7 +584,6 @@ export function BookingModal({
                         invalid={!!errors.checkIn}
                         onChange={(v) => {
                           setValue("checkIn", v, { shouldValidate: true, shouldDirty: true });
-                          // Keep the range valid — clear a check-out that's now earlier.
                           if (values.checkOut && values.checkOut <= v) {
                             setValue("checkOut", "", { shouldValidate: false });
                           }
@@ -305,7 +595,6 @@ export function BookingModal({
                       <label className={labelCls}>Check Out</label>
                       <DateField
                         value={values.checkOut}
-                        // At least one night — the check-in day itself is not selectable.
                         min={nextDayISO(values.checkIn || todayISO())}
                         ariaLabel="Check out"
                         placeholder="Select date"
@@ -315,47 +604,6 @@ export function BookingModal({
                         }
                       />
                       {errors.checkOut && <p className={errCls}>{errors.checkOut.message}</p>}
-                    </div>
-                  </div>
-
-                  <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <div>
-                      <label className={labelCls}>Guests</label>
-                      <div className="flex items-center justify-between rounded-sm border border-brand/30 bg-paper px-3.5 py-2">
-                        <button
-                          type="button"
-                          aria-label="Decrease guests"
-                          disabled={guests <= 1}
-                          onClick={() =>
-                            setValue("guests", Math.max(1, guests - 1), { shouldValidate: true })
-                          }
-                          className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full border border-brand/40 bg-paper text-[16px] leading-none text-brand transition-colors duration-300 ease-brand hover:border-brand disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          −
-                        </button>
-                        <span className="font-lato text-[15px] text-ink">{guests}</span>
-                        <button
-                          type="button"
-                          aria-label="Increase guests"
-                          disabled={guests >= maxGuests}
-                          onClick={() =>
-                            setValue("guests", Math.min(maxGuests, guests + 1), {
-                              shouldValidate: true,
-                            })
-                          }
-                          className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full border border-brand/40 bg-paper text-[16px] leading-none text-brand transition-colors duration-300 ease-brand hover:border-brand disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <p className="mt-1.5 font-lato text-[12px] text-ink/45">
-                        Guest up to {maxGuests}
-                      </p>
-                      {errors.guests && <p className={errCls}>{errors.guests.message}</p>}
-                    </div>
-                    <div>
-                      <label className={labelCls}>Room</label>
-                      <input readOnly value={unit.name} className={readonlyCls} />
                     </div>
                   </div>
 
@@ -373,109 +621,200 @@ export function BookingModal({
                     </div>
                   )}
 
-                  {unit.extraBed && (
-                    <div className="mb-2 border-t border-brand/20 pt-6">
-                      <span className="mb-4 block font-montserrat text-[11px] uppercase tracking-[0.15em] text-ink/55">
-                        Special Request
-                      </span>
-                      <div className="mb-[18px] flex items-center justify-between gap-4">
-                        <div className="flex flex-col items-start justify-start">
-                       <span className="font-lato text-[14.5px] text-ink">
-                          Add an extra bed?{" "}
-                          <span className="text-ink/50">
-                            ({formatNaira(unit.extraBedPrice)} each)
-                          </span>
-                        </span>
-                           {extraBed && (
-                        <div className="flex items-center justify-between rounded-sm bg-paper py-3">
-                          {/* <span className="font-lato text-[13.5px] text-ink/75">
-                            Number of extra beds
-                          </span> */}
-                          <div className="flex items-center gap-3.5">
-                            <button
-                              type="button"
-                              aria-label="Decrease extra beds"
-                              disabled={extraBeds <= 1}
-                              onClick={() => setValue("extraBeds", Math.max(1, extraBeds - 1))}
-                              className="h-[30px] w-[30px] cursor-pointer rounded-full border border-brand/40 text-[16px] leading-none text-brand transition-colors duration-300 ease-brand hover:border-brand disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              −
-                            </button>
-                            <span className="min-w-4 text-center font-lato text-[15px] text-ink">
-                              {extraBeds}
-                            </span>
-                            <button
-                              type="button"
-                              aria-label="Increase extra beds"
-                              disabled={extraBeds >= 4}
-                              onClick={() => setValue("extraBeds", Math.min(4, extraBeds + 1))}
-                              className="h-[30px] w-[30px] cursor-pointer rounded-full border border-brand/40 text-[16px] leading-none text-brand transition-colors duration-300 ease-brand hover:border-brand disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                        </div>
-
-                        <div className="flex gap-2.5">
-                          {([false, true] as const).map((choice) => (
-                            <button
-                              key={String(choice)}
-                              type="button"
-                              aria-pressed={extraBed === choice}
-                              onClick={() => setValue("extraBed", choice)}
+                  {/* Room verdicts, revealed after the check: available rooms get
+                      a success fill, sold-out rooms a danger fill. */}
+                  {availabilityDone && availResults.length > 0 && (
+                    <ul className="flex flex-col gap-2.5">
+                      {availResults.map((r) => {
+                        const free = r.unitsLeft > 0;
+                        return (
+                          <li
+                            key={r.slug}
+                            className={cn(
+                              "flex items-center justify-between gap-3 rounded-sm border px-4 py-3 transition-colors duration-300 ease-brand",
+                              free
+                                ? "border-success/30 bg-success/5"
+                                : "border-brand/30 bg-brand/5 opacity-80",
+                            )}
+                          >
+                            <div className="min-w-0">
+                              <p className={cn("truncate font-lato text-[14px]", free ? "text-ink" : "text-ink/60")}>
+                                {r.name}
+                              </p>
+                              <p className="font-lato text-[12px] text-ink/50">
+                                {r.category} · {formatNaira(r.priceValue)} / night
+                              </p>
+                            </div>
+                            <span
                               className={cn(
-                                "cursor-pointer rounded-sm border border-brand/35 px-[18px] py-2 font-montserrat text-[11.5px] uppercase tracking-[0.1em] transition-colors duration-300 ease-brand",
-                                extraBed === choice
-                                  ? "bg-brand font-semibold text-paper"
-                                  : "bg-transparent text-ink hover:border-brand hover:text-brand",
+                                "inline-flex shrink-0 items-center gap-1.5 font-montserrat text-[11px] font-semibold uppercase tracking-[0.1em]",
+                                free ? "text-success" : "text-brand",
                               )}
                             >
-                              {choice ? "Yes" : "No"}
-                            </button>
-                          ))}
-                        </div>
-
-
-                      
-                      </div>
-                     
-                    </div>
+                              <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", free ? "bg-success" : "bg-brand")} />
+                              {free ? `${r.unitsLeft} left` : "Sold out"}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
               )}
 
-              {/* STEP 2 — Guest Details */}
+              {/* STEP 2 — Dates & Room */}
               {step === 2 && (
                 <div>
-                  <h3 className="mb-6 font-cinzel text-[22px] font-semibold text-ink">
-                    Guest Details
-                  </h3>
-                  <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <div>
-                      <label className={labelCls}>Full Name</label>
-                      <input {...register("name")} className={inputCls} placeholder="Ada Obi" />
-                      {errors.name && <p className={errCls}>{errors.name.message}</p>}
+                  <h3 className="mb-2 font-cinzel text-[22px] font-semibold text-ink">Dates &amp; Room</h3>
+                  <p className="mb-5 font-lato text-[13.5px] text-ink/60">
+                    Set how many of each room, and the guests in each. Add a 0 to skip a room type.
+                  </p>
+
+                  {/* Booking type — one room type, or a mix. */}
+                  <div className="mb-6">
+                    <span className="mb-2 block font-montserrat text-[11px] uppercase tracking-[0.1em] text-ink/55">
+                      Booking type
+                    </span>
+                    <div className="inline-flex rounded-sm border border-brand/30 p-1">
+                      {(["single", "multiple"] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          aria-pressed={bookingType === t}
+                          onClick={() => changeBookingType(t)}
+                          className={cn(
+                            "rounded-[3px] px-4 py-2 font-montserrat text-[11px] uppercase tracking-[0.1em] transition-colors duration-300 ease-brand",
+                            bookingType === t
+                              ? "bg-brand font-semibold text-paper"
+                              : "text-ink/70 hover:text-brand",
+                          )}
+                        >
+                          {t === "single" ? "Single Booking" : "Multiple Booking"}
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <label className={labelCls}>Company / Delegation · optional</label>
-                      <input {...register("company")} className={inputCls} />
-                    </div>
+                    <p className="mt-2 font-lato text-[12px] text-ink/45">
+                      {bookingType === "single"
+                        ? "Book a single room type."
+                        : "Combine room types in one reservation (e.g. a 2-bedroom and a 3-bedroom)."}
+                    </p>
                   </div>
 
+                  <div className="flex flex-col gap-4">
+                    {lines.map((l) => {
+                      const on = l.qty > 0;
+                      return (
+                        <div
+                          key={l.slug}
+                          className={cn(
+                            "rounded-md border p-4 transition-colors duration-300 ease-brand",
+                            on ? "border-brand/35 bg-paper" : "border-brand/15 bg-mist/50",
+                          )}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                            <div className="min-w-[140px]">
+                              <p className="font-cinzel text-[16px] text-ink">{l.name}</p>
+                              <p className="font-lato text-[12px] text-ink/50">
+                                {formatNaira(l.priceValue)} / night · sleeps {l.sleeps}
+                              </p>
+                            </div>
+
+                            {/* Rooms quantity */}
+                            <div>
+                              <span className="mb-1.5 block font-montserrat text-[10px] uppercase tracking-[0.1em] text-ink/50">
+                                Rooms
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <StepBtn sign="−" label={`Fewer ${l.name}`} disabled={l.qty <= 0} onClick={() => setQty(l.slug, l.qty - 1)} />
+                                <span className="min-w-4 text-center font-lato text-[15px] text-ink">{l.qty}</span>
+                                <StepBtn sign="+" label={`More ${l.name}`} disabled={l.qty >= l.unitsLeft} onClick={() => setQty(l.slug, l.qty + 1)} />
+                              </div>
+                            </div>
+
+                            {/* Guests — capped at the room's DB capacity (sleeps × rooms). */}
+                            <div>
+                              <span className="mb-1.5 block font-montserrat text-[10px] uppercase tracking-[0.1em] text-ink/50">
+                                Guests <span className="text-ink/40">· up to {on ? capacityOf(l) : l.sleeps}</span>
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <StepBtn sign="−" label={`Fewer guests in ${l.name}`} disabled={!on || l.guests <= 1} onClick={() => setGuests(l.slug, l.guests - 1)} />
+                                <span className="min-w-4 text-center font-lato text-[15px] text-ink">{on ? l.guests : 0}</span>
+                                <StepBtn sign="+" label={`More guests in ${l.name}`} disabled={!on || l.guests >= capacityOf(l)} onClick={() => setGuests(l.slug, l.guests + 1)} />
+                              </div>
+                              {on && l.guests >= capacityOf(l) && (
+                                <p className="mt-1.5 font-lato text-[11px] text-ink/45">Max for {l.qty} room{l.qty === 1 ? "" : "s"}</p>
+                              )}
+                            </div>
+
+                            {/* Extra bed */}
+                            {l.extraBed && (
+                              <div>
+                                <span className="mb-1.5 block font-montserrat text-[10px] uppercase tracking-[0.1em] text-ink/50">
+                                  Extra bed <span className="text-ink/40">({formatNaira(l.extraBedPrice)}{on && l.addExtraBed ? ` · up to ${maxBedsOf(l)}` : ""})</span>
+                                </span>
+                                <div className="flex items-center gap-2.5">
+                                  {([false, true] as const).map((choice) => (
+                                    <button
+                                      key={String(choice)}
+                                      type="button"
+                                      disabled={!on}
+                                      aria-pressed={l.addExtraBed === choice}
+                                      onClick={() => patchLine(l.slug, { addExtraBed: choice })}
+                                      className={cn(
+                                        "cursor-pointer rounded-sm border border-brand/35 px-[14px] py-2 font-montserrat text-[11px] uppercase tracking-[0.1em] transition-colors duration-300 ease-brand disabled:opacity-40",
+                                        l.addExtraBed === choice
+                                          ? "bg-brand font-semibold text-paper"
+                                          : "bg-transparent text-ink hover:border-brand hover:text-brand",
+                                      )}
+                                    >
+                                      {choice ? "Yes" : "No"}
+                                    </button>
+                                  ))}
+                                  {on && l.addExtraBed && (
+                                    <div className="ml-1 flex items-center gap-2.5">
+                                      <StepBtn sign="−" label="Fewer extra beds" disabled={l.extraBeds <= 1} onClick={() => patchLine(l.slug, { extraBeds: Math.max(1, l.extraBeds - 1) })} />
+                                      <span className="min-w-4 text-center font-lato text-[14px] text-ink">{l.extraBeds}</span>
+                                      <StepBtn sign="+" label="More extra beds" disabled={l.extraBeds >= maxBedsOf(l)} onClick={() => patchLine(l.slug, { extraBeds: Math.min(maxBedsOf(l), l.extraBeds + 1) })} />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {submitError && <p className={cn(errCls, "mt-4")}>{submitError}</p>}
+                </div>
+              )}
+
+              {/* STEP 3 — Guest Details */}
+              {step === 3 && (
+                <div>
+                  <h3 className="mb-6 font-cinzel text-[22px] font-semibold text-ink">Guest Details</h3>
+
+                  {/* Contact first — the email is looked up to recognise you. */}
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
                       <label className={labelCls}>Contact Email</label>
-                      <input type="email" {...register("email")} className={inputCls} placeholder="you@example.com" />
+                      <input
+                        type="email"
+                        {...emailField}
+                        onBlur={(e) => {
+                          emailField.onBlur(e);
+                          void checkEmail();
+                        }}
+                        className={inputCls}
+                        placeholder="you@example.com"
+                      />
                       {errors.email && <p className={errCls}>{errors.email.message}</p>}
                     </div>
                     <div>
                       <label className={labelCls}>Contact Phone</label>
-                      {/* Picker + number share one border, divided internally. */}
                       <div
                         className={cn(
-                          // No `overflow-hidden` here — it would clip the dial-code dropdown.
                           "flex items-stretch rounded-sm border bg-paper transition-colors duration-300 ease-brand focus-within:border-brand",
                           errors.phone || errors.dialCode ? "border-brand" : "border-brand/30",
                         )}
@@ -499,32 +838,47 @@ export function BookingModal({
                       )}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* STEP 3 — Review & Confirm */}
-              {step === 3 && (
-                <div>
-                  <h3 className="mb-3 font-cinzel text-[22px] font-semibold text-ink">
-                    Review &amp; Confirm
-                  </h3>
-                  <p className="mb-6 font-lato text-[14px] leading-relaxed text-ink/65">
-                    Please check your details before continuing to payment.
-                  </p>
-                  <div className="border-t border-brand/10">
-                    <SummaryRow label="Room" value={unit.name} />
-                    <SummaryRow label="Dates" value={values.checkIn && values.checkOut ? `${values.checkIn} → ${values.checkOut}` : "—"} />
-                    <SummaryRow label="Nights" value={String(nights || "—")} />
-                    <SummaryRow label="Guests" value={String(values.guests)} />
-                    <SummaryRow label="Guest" value={values.name || "—"} />
-                    <SummaryRow label="Email" value={values.email || "—"} />
-                    <SummaryRow label="Phone" value={values.phone ? `${values.dialCode} ${values.phone}` : "—"} />
-                  </div>
-                  <label className="mt-6 flex items-start gap-2.5 font-lato text-[13.5px] text-ink">
-                    <input type="checkbox" {...register("agreedToTerms")} className="mt-1 h-4 w-4 accent-[#C81E2A]" />
-                    I agree to the Terms of Use and Privacy Policy.
-                  </label>
-                  {errors.agreedToTerms && <p className={errCls}>{errors.agreedToTerms.message}</p>}
+                  {/* Lookup status */}
+                  {customerLoading && (
+                    <p className="mt-3 font-lato text-[13px] text-ink/60">Checking your email…</p>
+                  )}
+                  {customerChecked && !customerLoading && (
+                    <p className="mt-3 font-lato text-[13px] text-ink/70">
+                      {customerExists
+                        ? "Welcome back — we found your details. Update anything that's changed."
+                        : "New here? Tell us your name to continue."}
+                    </p>
+                  )}
+
+                  {/* Name + company — revealed once the email has been checked. */}
+                  {customerChecked && (
+                    <>
+                      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div>
+                          <label className={labelCls}>Full Name</label>
+                          <input {...register("name")} className={inputCls} placeholder="Ada Obi" />
+                          {errors.name && <p className={errCls}>{errors.name.message}</p>}
+                        </div>
+                        <div>
+                          <label className={labelCls}>Company / Delegation · optional</label>
+                          <input {...register("company")} className={inputCls} />
+                        </div>
+                      </div>
+
+                      <label className="mt-6 flex items-start gap-2.5 font-lato text-[13.5px] text-ink">
+                        <input type="checkbox" {...register("agreedToTerms")} className="mt-1 h-4 w-4 accent-[#C81E2A]" />
+                        I agree to the Terms of Use and Privacy Policy.
+                      </label>
+                      {errors.agreedToTerms && <p className={errCls}>{errors.agreedToTerms.message}</p>}
+                    </>
+                  )}
+
+                  {submitError && (
+                    <div role="alert" className="mt-4 rounded-sm border border-brand bg-brand/5 px-4 py-3 font-lato text-[13px] text-brand">
+                      {submitError}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -577,18 +931,14 @@ export function BookingModal({
                       )}
                       <div>
                         <label className={labelCls}>Upload receipt</label>
-                        <ReceiptUpload
-                          value={receipt}
-                          onChange={setReceipt}
-                          onUploadingChange={setUploadingReceipt}
-                        />
+                        <ReceiptUpload value={receipt} onChange={setReceipt} onUploadingChange={setUploadingReceipt} />
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* STEP 5 — Confirmed */}
+              {/* STEP 6 — Confirmed */}
               {step === 5 && (
                 <div className="text-center">
                   <h3 className="mb-3 font-cinzel text-[24px] font-semibold text-ink">
@@ -626,19 +976,13 @@ export function BookingModal({
                     onClick={step === 4 ? pay : next}
                     className={primaryBtn}
                   >
-                    {submitting
-                      ? step === 1
-                        ? "Checking…"
-                        : "Please wait…"
-                      : step === 1
-                        ? availabilityConfirmed
-                          ? "Continue"
-                          : "Check Availability"
-                        : step === 4
-                          ? method === "card"
-                            ? "Pay Now"
-                            : "Submit Booking"
-                          : "Continue"}
+                    {step === 4
+                      ? submitting
+                        ? "Please wait…"
+                        : method === "card"
+                          ? "Pay Now"
+                          : "Submit Booking"
+                      : primaryLabel}
                   </button>
                 </div>
               )}
@@ -658,22 +1002,19 @@ export function BookingModal({
                   )}
                 </div>
 
-                <h3 className="font-cinzel text-[21px] font-semibold text-ink">{unit.name}</h3>
+                <h3 className="font-cinzel text-[21px] font-semibold text-ink">{summaryTitle}</h3>
                 <p className="mb-6 mt-1 font-lato text-[12.5px] text-ink/55">
-                  U2E Apartments · {unit.category}
+                  U2E Apartments{activeLines.length === 1 ? ` · ${activeLines[0].category}` : ""}
                 </p>
 
                 <div className="border-t border-brand/10">
+                  {activeLines.length > 0 && <SummaryRow label="Rooms" value={roomsLabel} />}
                   <SummaryRow
                     label="Dates"
                     value={values.checkIn && values.checkOut ? `${values.checkIn} → ${values.checkOut}` : "—"}
                   />
                   <SummaryRow label="Nights" value={String(nights || "—")} />
-                  <SummaryRow label="Guests" value={String(values.guests)} />
-                  <SummaryRow
-                    label="Extra bed"
-                    value={values.extraBed ? `${values.extraBeds || 1} × ${formatNaira(unit.extraBedPrice)}` : "—"}
-                  />
+                  <SummaryRow label="Guests" value={String(totalGuests || "—")} />
                   <SummaryRow label="Guest" value={values.name || "—"} />
                   <SummaryRow label="Email" value={values.email || "—"} />
                   <SummaryRow

@@ -8,13 +8,6 @@ export const bookingSchema = z
   .object({
     checkIn: z.string().min(1, "Select a check-in date"),
     checkOut: z.string().min(1, "Select a check-out date"),
-    guests: z
-      .number({ error: "Enter the number of guests" })
-      .int()
-      .min(1, "At least 1 guest")
-      .max(12, "Up to 12 guests"),
-    extraBed: z.boolean(),
-    extraBeds: z.number().int().min(1).max(4),
     name: z.string().min(1, "Enter your full name"),
     email: z.string().min(1, "Enter your email").email("Enter a valid email"),
     dialCode: z.string().min(1, "Select a dial code"),
@@ -34,12 +27,56 @@ export const bookingSchema = z
 
 export type BookingForm = z.infer<typeof bookingSchema>;
 
-/** Field groups validated per wizard step (used with RHF's `trigger()`). */
-export const step1Fields = ["checkIn", "checkOut", "guests", "extraBeds"] as const;
-export const step2Fields = ["name", "email", "dialCode", "phone"] as const;
-export const step3Fields = ["agreedToTerms"] as const;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const STEP_NAMES = ["Dates", "Details", "Review", "Payment", "Confirmed"] as const;
+/** One requested room line: a room slug, quantity, party, and extra-bed choice. */
+export const bookingRoomSchema = z.object({
+  slug: z.string().trim().min(1).max(120),
+  qty: z.number().int().min(1).max(10),
+  guests: z.number().int().min(1).max(30),
+  extraBed: z.boolean().default(false),
+  extraBeds: z.number().int().min(1).max(8).default(1),
+});
+
+/** `POST /api/bookings` payload — the persisted, multi-room reservation. */
+export const createBookingSchema = z
+  .object({
+    checkIn: z.string().regex(DATE_RE, "Use YYYY-MM-DD"),
+    checkOut: z.string().regex(DATE_RE, "Use YYYY-MM-DD"),
+    bookingType: z.enum(["single", "multiple"]).default("single"),
+    rooms: z.array(bookingRoomSchema).min(1, "Add at least one room").max(10),
+    name: z.string().trim().min(1, "Enter your full name").max(160),
+    email: z.string().trim().email("Enter a valid email"),
+    dialCode: z.string().trim().min(1).max(8),
+    phone: z.string().trim().min(1, "Enter your contact phone").max(40),
+    company: z.string().trim().max(160).optional(),
+    agreedToTerms: z.literal(true, { message: "Please accept the terms" }),
+  })
+  .refine((v) => v.checkOut > v.checkIn, {
+    path: ["checkOut"],
+    message: "Check-out must be after check-in",
+  });
+
+export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+
+/** `PATCH /api/bookings/[number]` payload — record the chosen payment. The
+ * receipt + reference are payment artefacts and are stored on `Payment`. */
+export const updateBookingPaymentSchema = z.object({
+  paymentMethod: z.enum(["card", "transfer"]),
+  receiptUrl: z.string().trim().url().max(500).optional(),
+  receiptFileName: z.string().trim().max(255).optional(),
+  paystackReference: z.string().trim().max(120).optional(),
+});
+export type UpdateBookingPaymentInput = z.infer<typeof updateBookingPaymentSchema>;
+
+/** RHF field groups validated per wizard step (room config lives in state). */
+export const dateFields = ["checkIn", "checkOut"] as const;
+export const detailsFields = ["name", "email", "dialCode", "phone"] as const;
+export const termsFields = ["agreedToTerms"] as const;
+
+// 5-step flow: Availability (dates) → Rooms (per-type config) → Details (+ terms)
+// → Payment → Confirmed. (No separate Review — the sticky summary covers it.)
+export const STEP_NAMES = ["Availability", "Rooms", "Details", "Payment", "Confirmed"] as const;
 
 /** Common dial codes (avoids a network round-trip for a country list). */
 export const DIAL_CODES = [

@@ -90,6 +90,50 @@ export type UnitDetailFull = UnitDetail & {
   extraBedPrice: number;
 };
 
+/** A room the booking modal can add to a reservation (the select + line data). */
+export type BookableRoom = {
+  slug: string;
+  name: string;
+  category: string;
+  priceValue: number;
+  sleeps: number;
+  extraBed: boolean;
+  extraBedPrice: number;
+  /** Max extra beds per room of this type (from the CRM). */
+  extraBedMax: number;
+};
+
+/**
+ * All active rooms as booking lines, ordered by price. Empty on error so the
+ * modal can still function with a passed-in unit. Powers the room select used
+ * for global "Book a Stay" and multi-room reservations.
+ */
+export async function getBookableRooms(): Promise<BookableRoom[]> {
+  try {
+    const rooms = await prisma.room.findMany({
+      where: { active: true },
+      orderBy: { priceFrom: "asc" },
+      select: {
+        slug: true, title: true, bedrooms: true, sleeps: true,
+        priceFrom: true, extraBed: true, extraBedPrice: true, extraBedMax: true,
+      },
+    });
+    return rooms.map((r) => ({
+      slug: r.slug,
+      name: r.title,
+      category: categoryFor(r.bedrooms),
+      priceValue: r.priceFrom,
+      sleeps: r.sleeps,
+      extraBed: r.extraBed,
+      extraBedPrice: r.extraBedPrice,
+      extraBedMax: r.extraBedMax,
+    }));
+  } catch (err) {
+    console.error("[getBookableRooms] returning none:", err);
+    return [];
+  }
+}
+
 const nairaFmt = new Intl.NumberFormat("en-NG");
 const formatNaira = (n: number) => `₦${nairaFmt.format(n)}`;
 
@@ -111,18 +155,21 @@ function categoryFor(bedrooms: number): string {
   return "Suite";
 }
 
-// Editorial highlights aren't authored per-room in the CRM; use a sensible
-// default so the details layout stays balanced.
-const DEFAULT_HIGHLIGHTS = [
-  {
-    title: "Rooftop Aperitif",
-    desc: "Sundown reaches new heights on the rooftop, with sparkling wine and small plates against uninterrupted skyline views.",
-  },
-  {
-    title: "In-Suite Dining",
-    desc: "As the evening settles, the in-house kitchen brings a candlelit dinner to your suite — a seasonal menu, plated and served in private.",
-  },
-];
+/** Build the room highlights (heading + body) purely from the CRM room — a
+ * highlight only appears when it has body copy; no default placeholders. */
+function highlightsFor(r: {
+  kitchenFeaturesTitle?: string | null;
+  kitchenFeatures?: string | null;
+  inSuiteDiningTitle?: string | null;
+  inSuiteDining?: string | null;
+}) {
+  const items: { title: string; desc: string }[] = [];
+  const kf = (r.kitchenFeatures ?? "").trim();
+  if (kf) items.push({ title: (r.kitchenFeaturesTitle ?? "").trim(), desc: kf });
+  const isd = (r.inSuiteDining ?? "").trim();
+  if (isd) items.push({ title: (r.inSuiteDiningTitle ?? "").trim(), desc: isd });
+  return items;
+}
 
 /** Active unit slugs for `generateStaticParams` (best effort; [] on error). */
 export async function getUnitSlugs(): Promise<string[]> {
@@ -159,7 +206,7 @@ export async function getUnitBySlug(slug: string): Promise<UnitDetailFull | null
         r.extraBed ? " Extra bed available." : ""
       }`,
       details: r.description,
-      highlights: DEFAULT_HIGHLIGHTS,
+      highlights: highlightsFor(r),
       gallery: gallery.length > 0 ? gallery : [FALLBACK_IMAGE],
       priceFrom: `${formatNaira(r.priceFrom)} / night`,
       amenities: servicesToAmenities(r.services),

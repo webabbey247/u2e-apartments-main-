@@ -50,11 +50,11 @@ export function ReasonsToStay() {
               <Reason key={i} text={text} index={i} />
             ))}
           </ul>
-          <div className="mt-10">
+          {/* <div className="mt-10">
             <BrandButton href={REASONS.cta.href} variant="solid">
               {REASONS.cta.label}
             </BrandButton>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

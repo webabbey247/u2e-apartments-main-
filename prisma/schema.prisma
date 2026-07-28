@@ -139,11 +139,16 @@ model Room {
   sleeps        Int      @default(2)
   size          String
   priceFrom     Int      @default(0) // NGN, per stay
+  inSuiteDiningTitle   String @default("In-Suite Dining")
+  inSuiteDining        String @default("") // editorial highlight
+  kitchenFeaturesTitle String @default("Rooftop Aperitif")
+  kitchenFeatures      String @default("") // editorial highlight
   featuredImage String?
   images        String[]
   services      String[]
   extraBed      Boolean  @default(false)
   extraBedPrice Int      @default(0)
+  extraBedMax   Int      @default(1)
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -281,15 +286,129 @@ enum BookingStatus {
   @@schema("public")
 }
 
-/// Existing reservations (owned by the booking flow) — read here only to work
-/// out availability. Minimal field set: just what an overlap check needs.
+/// Reservations (table owned by the event site's `public` schema). This app
+/// both reads them (availability, reviews) and writes them (the booking flow).
+/// `roomType` stays the primary/first room for backward-compat with the event
+/// app + CRM; the full room set lives in `ReservationRoom` lines.
 model Booking {
-  id       String        @id
-  checkIn  String
-  checkOut String
-  roomType RoomType
-  status   BookingStatus @default(PENDING)
+  id                String        @id @default(cuid())
+  reservationNumber String        @unique // human-shareable ref, quoted on reviews
+  customerId        String?
+  customer          Customer?     @relation(fields: [customerId], references: [id])
+  checkIn           String
+  checkOut          String
+  bookingType       String        @default("single") // "single" | "multiple"
+  guests            Int           @default(1)
+  roomType          RoomType
+  extraBed          Boolean       @default(false)
+  extraBeds         Int           @default(1)
+  name              String        @default("")
+  email             String        @default("")
+  phone             String?
+  dialCode          String?
+  company           String?
+  status            BookingStatus @default(PENDING)
+  isReviewAvailable Boolean       @default(false)
+  ipAddress         String?
+  agreedToTerms     Boolean       @default(false)
+  amount            Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  rooms             ReservationRoom[]
+  // Payment columns (paymentMethod / receiptUrl / receiptFileName /
+  // paystackReference) remain physically on this event-owned table for the
+  // event app + legacy rows, but this app no longer writes them — payment data
+  // lives in `Payment`, linked by reservationNumber.
 
   @@map("Reservation")
   @@schema("public")
+}
+
+/// One room line within a reservation — lets a single booking hold multiple
+/// rooms (e.g. a 2BR + a 3BR), each with a quantity. Additive to the shared
+/// schema; legacy reservations simply have no lines.
+model ReservationRoom {
+  id                String   @id @default(cuid())
+  reservationNumber String
+  roomSlug          String
+  roomType          RoomType
+  qty               Int      @default(1) // how many of this room
+  guests            Int      @default(1) // party in this room
+  extraBed          Boolean  @default(false)
+  extraBeds         Int      @default(1)
+  createdAt         DateTime @default(now())
+  reservation       Booking  @relation(fields: [reservationNumber], references: [reservationNumber], onDelete: Cascade)
+
+  @@index([reservationNumber])
+  @@index([roomType])
+  @@schema("public")
+}
+
+/// Payment records (table owned by the event site's `public` schema). Written
+/// here when the guest completes the payment step; the CRM Payments view lists
+/// these. `method` is "online" | "receipt"; `status` is "success" | "pending" |
+/// "not_found" | "failed".
+/// Guests, deduplicated by email. A reservation and its payments both reference
+/// the customer, so contact details live in one place.
+model Customer {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  phone        String?
+  dialCode     String?
+  company      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Booking[]
+  payments     Payment[]
+
+  @@map("Customer")
+  @@schema("public")
+}
+
+model Payment {
+  id                String    @id @default(cuid())
+  reservationNumber String
+  customerId        String?
+  customer          Customer? @relation(fields: [customerId], references: [id])
+  email             String
+  amount            Int
+  method            String
+  status            String
+  paystackReference String?
+  receiptUrl        String? // bank-transfer receipt (payment artefact, not reservation)
+  receiptFileName   String?
+  ip                String?
+  createdAt         DateTime  @default(now())
+
+  @@index([customerId])
+  @@map("Payment")
+  @@schema("public")
+}
+
+/// Guest reviews (authored/moderated in the CRM). Mirrors `crm.Review` — read
+/// here to publish approved reviews on the room page and written here on submit.
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@schema("crm")
+}
+
+model Review {
+  id                String       @id @default(cuid())
+  reservationNumber String
+  roomSlug          String
+  roomTitle         String       @default("")
+  guestName         String
+  rating            Int          @default(5)
+  body              String
+  status            ReviewStatus @default(PENDING)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([status])
+  @@index([roomSlug])
+  @@schema("crm")
 }

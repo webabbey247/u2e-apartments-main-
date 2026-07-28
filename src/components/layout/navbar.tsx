@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { NAV_LINKS } from "@/lib/content/home";
 import { useSiteConfig } from "@/components/providers/site-config-provider";
+import { useBookingModal } from "@/components/providers/booking-modal-provider";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils/cn";
  */
 export function Navbar() {
   const { phone } = useSiteConfig();
+  const { openBooking } = useBookingModal();
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -98,12 +100,13 @@ export function Navbar() {
                 {phone}
               </a>
             ) : (
-              <Link
-                href="/accommodation"
+              <button
+                type="button"
+                onClick={() => openBooking()}
                 className="rounded-full bg-brand px-5 py-2.5 font-montserrat text-[12px] font-semibold uppercase tracking-[0.12em] text-paper transition-all duration-500 ease-brand hover:bg-brand/90"
               >
                 Book a Stay
-              </Link>
+              </button>
             )}
             <button
               type="button"
@@ -144,12 +147,13 @@ export function Navbar() {
           ))}
     </ul>
     <div className="bg-mist w-full p-4">
-       <Link
-              href="/accommodation"
+       <button
+              type="button"
+              onClick={() => { setOpen(false); openBooking(); }}
               className="rounded-full block w-full bg-brand px-5 py-4 text-center font-montserrat text-[12px] font-semibold uppercase tracking-[0.12em] text-paper transition-all duration-500 ease-brand hover:bg-brand/90"
             >
               Book a Stay
-            </Link>    
+            </button>
     </div>
       </div>
     </header>

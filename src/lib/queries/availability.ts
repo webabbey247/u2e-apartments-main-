@@ -23,15 +23,52 @@ export type AvailabilityResult = {
  * LIMITATION: only 2- and 3-bedroom buckets exist. A room with any other
  * bedroom count has nothing to check against — see `unchecked` in the result.
  */
-function roomTypeFor(bedrooms: number): RoomType | null {
+export function roomTypeFor(bedrooms: number): RoomType | null {
   if (bedrooms === 2) return "TWO_BED";
   if (bedrooms === 3) return "THREE_BED";
   return null;
 }
 
-/** Statuses that hold a unit. FAILED / NOT_FOUND release their inventory. */
-const OCCUPYING: BookingStatusValue[] = ["PENDING", "CONFIRMED"];
+// Only CONFIRMED reservations hold inventory — a confirmed payment (card) or a
+// staff-confirmed transfer flips a reservation to CONFIRMED. PENDING bookings
+// (awaiting payment/verification) do NOT reserve the dates.
+const OCCUPYING: BookingStatusValue[] = ["CONFIRMED"];
 type BookingStatusValue = "PENDING" | "CONFIRMED" | "NOT_FOUND" | "FAILED";
+
+/**
+ * Units occupied per room-type bucket for stays overlapping [checkIn, checkOut).
+ * Sums `ReservationRoom` line quantities for multi-room bookings; legacy
+ * reservations that predate lines are counted once against their `roomType`.
+ * Shared by availability checks and the booking create route.
+ */
+export async function occupiedUnitsByType(
+  checkIn: string,
+  checkOut: string,
+): Promise<Record<RoomType, number>> {
+  const occupying = await prisma.booking.findMany({
+    where: {
+      status: { in: OCCUPYING },
+      checkIn: { lt: checkOut },
+      checkOut: { gt: checkIn },
+    },
+    select: {
+      roomType: true,
+      rooms: { select: { roomType: true, qty: true } },
+    },
+  });
+
+  const tally: Record<RoomType, number> = { TWO_BED: 0, THREE_BED: 0 };
+  for (const r of occupying) {
+    if (r.rooms.length > 0) {
+      // New booking: trust its explicit room lines.
+      for (const line of r.rooms) tally[line.roomType] += line.qty;
+    } else {
+      // Legacy booking without lines: one unit of its primary room type.
+      tally[r.roomType] += 1;
+    }
+  }
+  return tally;
+}
 
 const nights = (checkIn: string, checkOut: string) => {
   const a = new Date(`${checkIn}T00:00:00`).getTime();
@@ -79,14 +116,8 @@ export async function checkAvailability(
     return { ...base, available: room.units > 0, unitsBooked: 0, unitsLeft: room.units, unchecked: true };
   }
 
-  const unitsBooked = await prisma.booking.count({
-    where: {
-      roomType,
-      status: { in: OCCUPYING },
-      checkIn: { lt: checkOut },
-      checkOut: { gt: checkIn },
-    },
-  });
+  const occupied = await occupiedUnitsByType(checkIn, checkOut);
+  const unitsBooked = occupied[roomType];
 
   const unitsLeft = Math.max(0, room.units - unitsBooked);
   return { ...base, available: unitsLeft > 0, unitsBooked, unitsLeft };

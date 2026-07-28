@@ -12,6 +12,7 @@ const config: Config = {
         mist2: "#E7E9EB",
         mist3: "#EEF0F1",
         gold: "#D4AF37", // sparing accents
+        success: "#197A4E", // availability / positive states
       },
       fontFamily: {
         // CSS variables provided by next/font in app/layout.tsx
