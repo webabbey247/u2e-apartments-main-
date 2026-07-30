@@ -35,7 +35,7 @@ export const HERO = {
   eyebrow: "Serviced Apartments",
   title: "Comfort Has a New Address",
   body: "Spacious 2 & 3 Bedroom Suites designed for comfort, safety, and everyday ease. Book your stay in minutes.",
-  cta: { label: "Reserve Your Suite", href: "/accomodation" },
+  cta: { label: "Reserve Your Suite", href: "/accommodation" },
 } as const;
 
 export const MARQUEE_IMAGES = [
