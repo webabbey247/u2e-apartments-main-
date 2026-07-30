@@ -274,7 +274,7 @@ export function BookingModal({
     try {
       const catalogue = roomsQuery.data ?? [];
       if (catalogue.length === 0) {
-        setAvailabilityMsg({ kind: "error", text: "Rooms are still loading — please try again." });
+        setAvailabilityMsg({ kind: "error", text: "Rooms are still loading. Please try again in a moment." });
         return false;
       }
 
@@ -311,7 +311,7 @@ export function BookingModal({
       if (free.length === 0) {
         setAvailabilityMsg({
           kind: "error",
-          text: "Sorry — no rooms are available for those dates. Try different dates.",
+          text: "Sorry, no rooms are available for those dates. Please try different dates.",
         });
         setLines([]);
         setAvailabilityDone(false);
@@ -846,7 +846,7 @@ export function BookingModal({
                   {customerChecked && !customerLoading && (
                     <p className="mt-3 font-lato text-[13px] text-ink/70">
                       {customerExists
-                        ? "Welcome back — we found your details. Update anything that's changed."
+                        ? "Welcome back! We found your details. Update anything that's changed."
                         : "New here? Tell us your name to continue."}
                     </p>
                   )}
@@ -946,8 +946,8 @@ export function BookingModal({
                   </h3>
                   <p className="mx-auto max-w-md font-lato text-[14.5px] leading-relaxed text-ink/70">
                     {method === "card"
-                      ? "Thank you — your reservation is confirmed. A confirmation email is on its way."
-                      : "Thanks — we’ve received your details. Your booking is confirmed once we verify your transfer."}
+                      ? "Thank you! Your reservation is confirmed, and a confirmation email is on its way."
+                      : "Thanks! We’ve received your details, and your booking is confirmed once we verify your transfer."}
                   </p>
                   {reference && (
                     <p className="mt-5 font-montserrat text-[12px] uppercase tracking-[0.15em] text-ink/60">

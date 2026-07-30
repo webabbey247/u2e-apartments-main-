@@ -69,19 +69,23 @@ export default async function ReviewPage({
         {eligibility.ok ? (
           <section className="bg-paper px-6 py-24 md:px-10 md:py-32">
             <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-14">
-              <ReviewForm reservationNumber={reservationNumber} />
+              <ReviewForm
+                reservationNumber={reservationNumber}
+                guestName={eligibility.reservation.guestName}
+                email={eligibility.reservation.email}
+              />
               <ReservationSummaryCard reservation={eligibility.reservation} />
             </div>
           </section>
         ) : eligibility.reason === "already_reviewed" ? (
           <Notice
             title="You've already reviewed this stay"
-            body="Our records show a review has already been submitted for this reservation. Thank you — one review per stay keeps things fair for everyone."
+            body="Our records show a review has already been submitted for this reservation. Thank you. One review per stay keeps things fair for everyone."
           />
         ) : eligibility.reason === "not_available" ? (
           <Notice
             title="Reviews open after your stay"
-            body="You'll be able to review this stay once it's complete. We'll email you an invitation with a link shortly after checkout — thank you for your patience."
+            body="You'll be able to review this stay once it's complete. We'll email you an invitation with a link shortly after checkout. Thank you for your patience."
           />
         ) : (
           <Notice

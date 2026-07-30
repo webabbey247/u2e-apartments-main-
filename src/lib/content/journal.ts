@@ -22,7 +22,7 @@ export const JOURNAL_CATEGORIES: JournalCategory[] = [
 export const JOURNAL_HERO = {
   eyebrow: "Our Journal",
   title: "Our Journal",
-  body: "Stories from U2E — dining, design, wellness, and the little moments that make a longer stay feel like home.",
+  body: "Stories from U2E: dining, design, wellness, and the little moments that make a longer stay feel like home.",
   image: `${CDN2}/69df1004a87b40c7b362304a_blog%20(6).avif`,
 } as const;
 
@@ -57,7 +57,7 @@ export const SAMPLE_ARTICLE_BODY: ArticleBlock[] = [
   { type: "heading", text: "Start With a Home Base That Does It All" },
   {
     type: "paragraph",
-    text: "The best stays begin with somewhere that quietly takes care of the details — so you can focus on the reason you came. At U2E, that means a serviced suite, an in-house kitchen, a spa and fitness floor, and event spaces, all under one roof and a lift away.",
+    text: "The best stays begin with somewhere that quietly takes care of the details, so you can focus on the reason you came. At U2E, that means a serviced suite, an in-house kitchen, a spa and fitness floor, and event spaces, all under one roof and a lift away.",
   },
   {
     type: "paragraph",
@@ -66,7 +66,7 @@ export const SAMPLE_ARTICLE_BODY: ArticleBlock[] = [
   { type: "heading", text: "Settle In, Then Explore" },
   {
     type: "paragraph",
-    text: "Comfort, flexibility, and convenience matter most on a longer stay. Each unit is designed for real living — a proper workspace, a full kitchenette, generous storage, and fast, reliable Wi-Fi — with housekeeping and a 24-hour front desk to smooth the edges.",
+    text: "Comfort, flexibility, and convenience matter most on a longer stay. Each unit is designed for real living: a proper workspace, a full kitchenette, generous storage, and fast, reliable Wi-Fi, with housekeeping and a 24-hour front desk to smooth the edges.",
   },
   {
     type: "figure",
@@ -75,7 +75,7 @@ export const SAMPLE_ARTICLE_BODY: ArticleBlock[] = [
   },
   {
     type: "paragraph",
-    text: "When you're ready to venture out, the neighbourhood's best cafés, galleries, and walks are all within easy reach — and our team is happy to point you toward the ones worth your time.",
+    text: "When you're ready to venture out, the neighbourhood's best cafés, galleries, and walks are all within easy reach, and our team is happy to point you toward the ones worth your time.",
   },
 ];
 
@@ -84,7 +84,7 @@ export const FEATURED_POST: JournalPost = {
   category: "News",
   title: "Making the Most of a Longer Stay",
   excerpt:
-    "From setting up a comfortable home office to finding your rhythm with dining and wellness — a guide to settling in and getting the most from an extended stay at U2E.",
+    "From setting up a comfortable home office to finding your rhythm with dining and wellness: a guide to settling in and getting the most from an extended stay at U2E.",
   image: `${CDN2}/69dcd8445b86d4b44f5a22ef_blog%20(2).jpg`,
   date: "2026-07-02",
 };
@@ -94,7 +94,7 @@ export const JOURNAL_POSTS: JournalPost[] = [
     slug: "a-seasonal-table-at-the-u2e-kitchen",
     category: "Culture",
     title: "A Seasonal Table at The U2E Kitchen",
-    excerpt: "Behind the seasonal menu with our head chef — where the ingredients come from and how the dishes take shape.",
+    excerpt: "Behind the seasonal menu with our head chef: where the ingredients come from and how the dishes take shape.",
     image: `${CDN2}/69df135fd898c2065136aa1b_blog%20(1).avif`,
     date: "2026-06-24",
   },
@@ -110,7 +110,7 @@ export const JOURNAL_POSTS: JournalPost[] = [
     slug: "rooftop-jazz-returns-this-season",
     category: "Event",
     title: "Rooftop Jazz Returns This Season",
-    excerpt: "Our rooftop jazz nights are back — here's what to expect and how to reserve your place.",
+    excerpt: "Our rooftop jazz nights are back. Here's what to expect and how to reserve your place.",
     image: `${CDN2}/69df10a9f251db5d882a3e5b_blog%20(5).avif`,
     date: "2026-05-30",
   },
@@ -118,7 +118,7 @@ export const JOURNAL_POSTS: JournalPost[] = [
     slug: "designing-a-calmer-city-stay",
     category: "Culture",
     title: "Designing a Calmer City Stay",
-    excerpt: "The thinking behind our suites — light, texture, and quiet detail that make a room feel restful.",
+    excerpt: "The thinking behind our suites: light, texture, and quiet detail that make a room feel restful.",
     image: `${CDN2}/69df0f8e934223839a3a8c34_blog%20(4).avif`,
     date: "2026-05-18",
   },
@@ -142,7 +142,7 @@ export const JOURNAL_POSTS: JournalPost[] = [
     slug: "hosting-a-private-dinner-at-u2e",
     category: "Event",
     title: "Hosting a Private Dinner at U2E",
-    excerpt: "How our team brings a private dining room to life — from menu to table setting.",
+    excerpt: "How our team brings a private dining room to life, from menu to table setting.",
     image: `${CDN2}/69df10a9f251db5d882a3e5b_blog%20(5).avif`,
     date: "2026-04-08",
   },
@@ -170,7 +170,7 @@ export const JOURNAL_PAGE_SIZE = 6;
 export const JOURNAL_WELLNESS = {
   eyebrow: "Spa & Wellness",
   title: "Between the Lines",
-  body: "There's more to a stay than a good story — our spa and fitness floor are tucked away from the bustle, so you can properly switch off between days.",
+  body: "There's more to a stay than a good story. Our spa and fitness floor are tucked away from the bustle, so you can properly switch off between days.",
   cta: { label: "Explore wellness", href: "/experience" },
   image: `${CDN2}/69df0e232f693070015cff53_blog%20(3).avif`,
 } as const;

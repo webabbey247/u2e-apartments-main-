@@ -54,7 +54,7 @@ export function ContactForm() {
         <div className="mt-8">
           <h3 className="font-cinzel text-2xl text-ink">Thank you.</h3>
           <p className="mt-3 font-lato text-base leading-relaxed text-ink/70">
-            Your message has been received — we'll be in touch within one business day.
+            Your message has been received. We'll be in touch within one business day.
           </p>
         </div>
       ) : (

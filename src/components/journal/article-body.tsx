@@ -44,13 +44,14 @@ function Block({ block }: { block: ArticleBlock }) {
 function ShareRow({ post }: { post: JournalPost }) {
   const [copied, setCopied] = useState(false);
   const path = `/journal/${post.slug}`;
-
-  const shareUrl = () =>
-    typeof window !== "undefined" ? window.location.href : `https://u2eapartments.com${path}`;
+  // Canonical, deterministic URL — the same on server and client, so the share
+  // links' `href` never causes a hydration mismatch. (Reading window.location
+  // during render would differ between SSR and hydration.)
+  const shareUrl = `https://u2eapartments.com${path}`;
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl());
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -70,7 +71,7 @@ function ShareRow({ post }: { post: JournalPost }) {
       {links.map((l) => (
         <a
           key={l.label}
-          href={l.href(shareUrl())}
+          href={l.href(shareUrl)}
           target="_blank"
           rel="noreferrer"
           className="flex h-9 items-center justify-center rounded-full border border-ink/20 px-3 font-montserrat text-[11px] uppercase tracking-[0.1em] text-ink/70 transition-colors duration-300 ease-brand hover:border-brand hover:text-brand"

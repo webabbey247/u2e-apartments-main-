@@ -14,7 +14,7 @@ export function ContactMap() {
 
   return (
     <section className="bg-mist">
-      <div ref={ref} className="relative aspect-[16/9] w-full overflow-hidden md:aspect-[21/9]">
+      <div ref={ref} className="relative aspect-[16/9] w-full overflow-hidden md:aspect-[21/9] lg:aspect-[27/9]">
         <iframe
           title={`Map to U2E Apartments — ${address}`}
           src={mapUrl || CONTACT_MAP_EMBED}

@@ -12,13 +12,13 @@ const CDN2 = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960fb";
 export const ACC_HERO = {
   eyebrow: "Accommodation",
   title: "Suites Built for Living",
-  body: "Every U2E unit is elegant by design, effortless by nature — a true home base for longer, better stays, with dining, wellness, and event spaces just moments away.",
+  body: "Every U2E unit is elegant by design and effortless by nature, a true home base for longer, better stays, with dining, wellness, and event spaces just moments away.",
   image: `/assets/accommodation-hero-2.jpg`,
 } as const;
 
 export const SUITES = {
   eyebrow: "Stay With Us",
-  title: "Stay With Us — All Suites",
+  title: "Browse All Our Suites",
   body: "Warm timber and quiet, considered detail combine to create an inviting, refined stay in every suite.",
   items: [
     {
@@ -64,12 +64,12 @@ export const REASONS = {
 export const RESIDENCES = {
   eyebrow: "For Longer Stays",
   title: "All Residences",
-  body: "More room to live, work, and host — our multi-bedroom residences are ideal for families and extended stays.",
+  body: "More room to live, work, and host. Our multi-bedroom residences are ideal for families and extended stays.",
   items: [
     {
       slug: "two-bedroom-residence",
       name: "Two-Bedroom Residence",
-      desc: "Room to spread out, work, and host — ideal for families and longer stays.",
+      desc: "Room to spread out, work, and host. Ideal for families and longer stays.",
       beds: 2,
       baths: 2,
       area: "1,200 sq ft",
@@ -99,7 +99,7 @@ export const RESIDENCES = {
 export const ACC_WELLNESS = {
   eyebrow: "Spa & Wellness",
   title: "Rest Comes Standard",
-  body: "Every stay includes access to the spa and fitness floor — tucked away from the bustle so you can properly switch off between days.",
+  body: "Every stay includes access to the spa and fitness floor, tucked away from the bustle so you can properly switch off between days.",
   cta: { label: "Explore wellness", href: "/experience" },
   image: `${CDN2}/69fd7d7a679f5b8f26da6f71_experiences.jpg`,
 } as const;
@@ -122,11 +122,11 @@ export const ACC_FAQ = {
     },
     {
       q: "Are the apartments serviced during my stay?",
-      a: "Yes — each unit is fully serviced with regular housekeeping, fresh linens, and 24/7 front-desk support throughout your stay.",
+      a: "Yes. Every unit is fully serviced, with regular housekeeping, fresh linens, and 24/7 front-desk support throughout your stay.",
     },
     {
       q: "How do I pay for my booking?",
-      a: "Pay online by card via Paystack at checkout, or by bank transfer — for transfers, email your receipt and booking reference to confirm your stay.",
+      a: "Pay online by card via Paystack at checkout, or by bank transfer. For a transfer, just email your receipt and booking reference and we'll confirm your stay.",
     },
   ],
 } as const;

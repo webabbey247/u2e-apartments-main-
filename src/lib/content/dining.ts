@@ -12,14 +12,14 @@ const SANITY = "https://cdn.sanity.io/images/wdxob59c/production";
 export const DINING_HERO = {
   eyebrow: "Dining",
   title: "Good Food, Made With Care",
-  body: "From your first coffee of the day to the last table of the night, our in-house kitchen keeps things simple and delicious — a seasonal menu, an easy-to-love wine list, and craft cocktails made just right.",
+  body: "From your first coffee of the day to the last table of the night, our in-house kitchen keeps things simple and delicious, with a seasonal menu, an easy-to-love wine list, and craft cocktails made just right.",
   image: `/assets/dinning-hero.webp`,
 } as const;
 
 export const DINING_FEATURE = {
   eyebrow: "The U2E Kitchen",
   title: "Every Plate, Made With Intention",
-  body: "Led by our head chef, The U2E Kitchen brings you an intimate dining experience where comfort classics meet contemporary flavor — paired with a thoughtful wine list and handcrafted cocktails.",
+  body: "Led by our head chef, The U2E Kitchen brings you an intimate dining experience where comfort classics meet contemporary flavor, paired with a thoughtful wine list and handcrafted cocktails.",
   cta: { label: "Reserve a Table", href: "/contact" },
   image: `/assets/u2e-dinning-intro.webp`,
 } as const;
@@ -27,7 +27,7 @@ export const DINING_FEATURE = {
 export const RESTAURANT_MENU = {
   eyebrow: "Visit Us",
   title: "Straight from our kitchen.",
-  body: "Staying with us or just passing through — either way, our kitchen is where you come to slow down and enjoy a really good meal.",
+  body: "Staying with us or just passing through? Either way, our kitchen is where you come to slow down and enjoy a really good meal.",
   note: "*Reservations recommended",
   // TODO: placeholder imagery — swap for U2E kitchen photography (or a
   // `crm.MenuItem` read) before launch.
@@ -53,7 +53,7 @@ export const DINING_GALLERY = {
 export const POOLSIDE = {
   eyebrow: "Poolside Dining",
   title: "Where the Day Slows Down",
-  body: "Step outside to the poolside terrace — a lively, social setting among the gardens. Settle in with appetizers, salads, and sandwiches alongside craft cocktails and local favourites.",
+  body: "Step outside to the poolside terrace, a lively, social setting among the gardens. Settle in with appetizers, salads, and sandwiches alongside craft cocktails and local favourites.",
   cta: { label: "Dining Menus", href: "/dining/menu" },
   image: `${CDN}/69e0d56b4893c0b47ca402de_information%20(2).webp`,
 } as const;

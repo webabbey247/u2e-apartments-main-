@@ -27,11 +27,11 @@ export function About() {
           <p className="mt-6 font-lato text-base leading-relaxed text-ink/70 md:text-lg">
             {ABOUT.body}
           </p>
-          <div className="mt-9">
+          {/* <div className="mt-9">
             <BrandButton href={ABOUT.cta.href} variant="outline">
               {ABOUT.cta.label}
             </BrandButton>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center justify-center gap-5">

@@ -66,7 +66,7 @@ const HIGHLIGHTS = [
   },
   {
     title: "In-Suite Dining",
-    desc: "As the evening settles, the in-house kitchen brings a candlelit dinner to your suite — a seasonal menu, plated and served in private.",
+    desc: "As the evening settles, the in-house kitchen brings a candlelit dinner to your suite: a seasonal menu, plated and served in private.",
   },
 ];
 
@@ -130,7 +130,7 @@ export const UNITS: Record<string, UnitDetail> = {
     beds: 2,
     baths: 2,
     area: "1,200 sq ft",
-    bedConfig: "2 Bedrooms — 1 King and 2 Queen beds.",
+    bedConfig: "2 Bedrooms with 1 King and 2 Queen beds.",
     details: DETAILS,
     highlights: HIGHLIGHTS,
     gallery: SUITS,
@@ -143,7 +143,7 @@ export const UNITS: Record<string, UnitDetail> = {
     beds: 3,
     baths: 2,
     area: "1,650 sq ft",
-    bedConfig: "3 Bedrooms — 1 King and 2 Queen beds.",
+    bedConfig: "3 Bedrooms with 1 King and 2 Queen beds.",
     details: DETAILS,
     highlights: HIGHLIGHTS,
     gallery: SUITS,
@@ -156,7 +156,7 @@ export const UNITS: Record<string, UnitDetail> = {
     beds: 4,
     baths: 3,
     area: "2,200 sq ft",
-    bedConfig: "4 Bedrooms — 2 King and 2 Queen beds.",
+    bedConfig: "4 Bedrooms with 2 King and 2 Queen beds.",
     details: DETAILS,
     highlights: HIGHLIGHTS,
     gallery: SUITS,

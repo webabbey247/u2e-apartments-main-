@@ -9,12 +9,12 @@ const CDN = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960ee";
 export const CONTACT_HERO = {
   eyebrow: "Contact",
   title: "Get in Touch",
-  body: "Questions about a stay, an event, or dining — or something you'd like to share? We'd love to hear from you.",
+  body: "Questions about a stay, an event, or dining, or something you'd like to share? We'd love to hear from you.",
   image: `/assets/u2e-contact-us-hero.webp`,
 } as const;
 
 export const CONTACT_DETAILS = {
-  intro: "Reach us directly, or send a message using the form — our team typically replies within one business day.",
+  intro: "Reach us directly, or send a message using the form. Our team typically replies within one business day.",
   items: [
     { label: "Visit", value: "12 Marina Boulevard, Victoria Island, Lagos" },
     { label: "Call", value: "+234 000 111 2224", href: "tel:+2340001112224" },
@@ -47,7 +47,7 @@ export const CONTACT_FAQ = {
     },
     {
       q: "Can you help me with an existing booking?",
-      a: "Yes — include your booking reference (BKG-XXXXXX) in your message and we'll pull up your reservation right away.",
+      a: "Yes. Include your booking reference (BKG-XXXXXX) in your message and we'll pull up your reservation right away.",
     },
     {
       q: "Do you have parking on-site?",
@@ -55,7 +55,7 @@ export const CONTACT_FAQ = {
     },
     {
       q: "How do I get there?",
-      a: "We're on Marina Boulevard, Victoria Island — a short drive from the city centre. Use the map below for directions, or ask us about airport transfers.",
+      a: "We're on Marina Boulevard, Victoria Island, a short drive from the city centre. Use the map below for directions, or ask us about airport transfers.",
     },
   ],
 } as const;

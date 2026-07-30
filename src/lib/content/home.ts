@@ -34,7 +34,7 @@ export const CONTACT_PHONE = "000 111 2224";
 export const HERO = {
   eyebrow: "Serviced Apartments",
   title: "Comfort Has a New Address",
-  body: "Spacious 2 & 3 Bedroom Suites designed for comfort, safety, and everyday ease — book your stay in minutes.",
+  body: "Spacious 2 & 3 Bedroom Suites designed for comfort, safety, and everyday ease. Book your stay in minutes.",
   cta: { label: "Reserve Your Suite", href: "/accomodation" },
 } as const;
 
@@ -50,7 +50,7 @@ export const MARQUEE_IMAGES = [
 export const ABOUT = {
   eyebrow: "About Us",
   title: "Welcome to U2E Apartments",
-  body: "At U2E, we believe a great stay starts with a space that feels like home. Whether you're in town for a short trip or settling in for longer, our thoughtfully furnished 2 and 3 Bedroom Suites give you the comfort, privacy, and peace of mind you deserve — all wrapped in a warm, welcoming experience from check-in to check-out.",
+  body: "At U2E, we believe a great stay starts with a space that feels like home. Whether you're in town for a short trip or settling in for longer, our thoughtfully furnished 2 and 3 Bedroom Suites give you the comfort, privacy, and peace of mind you deserve, all wrapped in a warm, welcoming experience from check-in to check-out.",
   cta: { label: "Know More About Us", href: "/accommodation" },
 } as const;
 
@@ -109,7 +109,7 @@ export const ROOMS = {
     {
       index: "03 / 04",
       title: "Two-Bedroom Residence",
-      desc: "Room to spread out, work, and host — ideal for longer stays and families.",
+      desc: "Room to spread out, work, and host. Ideal for longer stays and families.",
       image: `${CDN2}/69ef41225283c5a0d84b08df_villas%20(4)-p-1080.jpg`,
     },
     {
@@ -173,7 +173,7 @@ export const WELLNESS = {
 export const GALLERY = {
   eyebrow: "Gallery",
   title: "Every Corner Tells a Story",
-  body: "Step through a collection of moments that capture the warmth, calm, and comfort of U2E Apartments — a glimpse into restful stays and refined living, one frame at a time.",
+  body: "Step through a collection of moments that capture the warmth, calm, and comfort of U2E Apartments. A glimpse into restful stays and refined living, one frame at a time.",
   cta: { label: "Explore Our Gallery", href: "/gallery" },
   images: [
     `${CDN}/69e0bfa15f0fa8776fb91cc7_gallery%20(9)-p-1080.webp`,
@@ -234,7 +234,7 @@ export const FAQ = {
     },
     {
       q: "How do I pay for my booking?",
-      a: "You can pay online by card via Paystack at checkout, or by bank transfer — for transfers, email your receipt and booking reference to confirm your stay.",
+      a: "You can pay online by card via Paystack at checkout, or by bank transfer. For a transfer, just email your receipt and booking reference and we'll confirm your stay.",
     },
     {
       q: "Are the apartments serviced during my stay?",
@@ -242,7 +242,7 @@ export const FAQ = {
     },
     {
       q: "Can I book a meeting or event space?",
-      a: "Absolutely. Our event spaces suit weddings, corporate meetings, and private celebrations — send an enquiry through the Meetings & Events page and our team will follow up.",
+      a: "Absolutely. Our event spaces suit weddings, corporate meetings, and private celebrations. Send an enquiry through the Meetings & Events page and our team will follow up.",
     },
     {
       q: "Do you offer in-house dining?",

@@ -10,7 +10,9 @@ import { ACC_FAQ } from "@/lib/content/accommodation";
 // import { Experiences } from "@/components/home/experiences";
 import { getSuites } from "@/lib/queries/rooms";
 import { getFaqs } from "@/lib/queries/faqs";
+import { getTestimonials } from "@/lib/queries/testimonials";
 import { SocialMediaMarquee } from "@/components/home/social-marquee";
+import { Testimonials } from "@/components/home/testimonials";
 
 export const metadata: Metadata = {
   title: "Accommodation — U2E Apartments",
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function AccommodationPage() {
-  const suites = await getSuites();
+  const [suites, testimonials] = await Promise.all([getSuites(), getTestimonials()]);
   const accFaq = await getFaqs("ACCOMMODATION", {
     eyebrow: ACC_FAQ.eyebrow,
     title: ACC_FAQ.title,
@@ -36,6 +38,7 @@ export default async function AccommodationPage() {
         <AccommodationHero />
         <SuitesListing items={suites} />
         <ReasonsToStay />
+        <Testimonials content={testimonials} />
         <Faq content={accFaq} />
         <SocialMediaMarquee />
       </main>

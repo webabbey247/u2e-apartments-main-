@@ -10,7 +10,7 @@ const CDN2 = "https://cdn.prod.website-files.com/69c9f978ea8ed16c5b8960fb";
 export const EXP_HERO = {
   eyebrow: "Experiences",
   title: "Slow Down, Your Way",
-  body: "However you like to recharge, U2E has a spot for it — a fitness studio to break a sweat, a spa and wellness floor to breathe easier, a rooftop pool to soak in the view, and quiet corners just for slowing down. All just a lift ride from your suite.",
+  body: "However you like to recharge, U2E has a spot for it: a fitness studio to break a sweat, a spa and wellness floor to breathe easier, a rooftop pool to soak in the view, and quiet corners just for slowing down. All just a lift ride from your suite.",
   image: `/assets/u2e-experience-herobanner.webp`,
 } as const;
 
@@ -46,7 +46,7 @@ export const EXPERIENCE_LISTING = {
     {
       key: "Wellness Garden",
       headline: "Escape Outdoors",
-      desc: "Step into the landscaped garden — a green, quiet pocket for a slow morning coffee or a moment of stillness.",
+      desc: "Step into the landscaped garden, a green, quiet pocket for a slow morning coffee or a moment of stillness.",
       image: `${CDN2}/69cca2104b95bf2943a959d6_seasonal%20Experiance%20(3).avif`,
     },
   ],

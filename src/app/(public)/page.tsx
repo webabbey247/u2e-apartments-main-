@@ -12,6 +12,7 @@ import { Gallery } from "@/components/home/gallery";
 import { Events } from "@/components/home/events";
 // import { Journal } from "@/components/home/journal";
 import { SocialMediaMarquee } from "@/components/home/social-marquee";
+import { Testimonials } from "@/components/home/testimonials";
 import { Faq } from "@/components/home/faq";
 import { Footer } from "@/components/layout/footer";
 import { getVillas } from "@/lib/queries/rooms";
@@ -19,6 +20,7 @@ import { getFaqs } from "@/lib/queries/faqs";
 import { getMarqueeImages, getGalleryImages } from "@/lib/queries/gallery";
 import { getSpotlightExperiences } from "@/lib/queries/experiences";
 import { getUpcomingEvents } from "@/lib/queries/events";
+import { getTestimonials } from "@/lib/queries/testimonials";
 import { FAQ } from "@/lib/content/home";
 import { UpcomingEvents } from "@/components/meetings/upcoming-events";
 
@@ -26,13 +28,15 @@ import { UpcomingEvents } from "@/components/meetings/upcoming-events";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [villas, marqueeImages, galleryImages, experiences, events] = await Promise.all([
-    getVillas(),
-    getMarqueeImages(),
-    getGalleryImages(5),
-    getSpotlightExperiences(4),
-    getUpcomingEvents(),
-  ]);
+  const [villas, marqueeImages, galleryImages, experiences, events, testimonials] =
+    await Promise.all([
+      getVillas(),
+      getMarqueeImages(),
+      getGalleryImages(5),
+      getSpotlightExperiences(4),
+      getUpcomingEvents(),
+      getTestimonials(),
+    ]);
   const faq = await getFaqs(["SUPPORT", "GENERAL"], {
     eyebrow: FAQ.eyebrow,
     title: FAQ.title,
@@ -51,6 +55,7 @@ export default async function HomePage() {
          <Villas items={villas} />
         <Gallery images={galleryImages} />
          <UpcomingEvents items={events} />
+        <Testimonials content={testimonials} />
         <Faq content={faq} />
         <SocialMediaMarquee />
       </main>

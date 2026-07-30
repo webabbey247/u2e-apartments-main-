@@ -47,7 +47,7 @@ export const GALLERY_IMAGES: GalleryImage[] = [
 export const GALLERY_WELLNESS = {
   eyebrow: "Spa & Wellness",
   title: "Space to Breathe",
-  body: "Beyond the frame — our spa and fitness floor are tucked away from the bustle, so you can properly switch off between days.",
+  body: "Beyond the frame, our spa and fitness floor are tucked away from the bustle, so you can properly switch off between days.",
   cta: { label: "Explore wellness", href: "/experience" },
   image: `${CDN}/69e0bfa0c56aae58cf3655fc_gallery%20(7).webp`,
 } as const;

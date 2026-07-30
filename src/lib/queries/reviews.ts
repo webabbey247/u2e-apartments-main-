@@ -95,6 +95,36 @@ export type ReviewEligibility =
   | { ok: true; reservationNumber: string; reservation: ReservationSummary }
   | { ok: false; reason: "not_found" | "not_available" | "already_reviewed" };
 
+/** Today as YYYY-MM-DD — `checkOut` is stored as a comparable date string. */
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Is this reservation open for review yet?
+ *
+ * `isReviewAvailable` is the CRM's "invite email sent" flag (set by its
+ * review-invites cron) and is the fast path. It is *not* sufficient on its own,
+ * though: the CRM only writes it once the invite email actually delivers, so a
+ * guest holding a perfectly valid review link would be locked out by an SMTP
+ * failure or a cron that simply hasn't run yet. So fall back to the same
+ * conditions the cron itself checks — checkout in the past, and a successful
+ * payment. Same bar, minus the dependency on email delivery.
+ */
+export async function isReviewOpen(r: {
+  reservationNumber: string;
+  isReviewAvailable: boolean;
+  checkOut: string;
+}): Promise<boolean> {
+  if (r.isReviewAvailable) return true;
+  if (r.checkOut >= todayISO()) return false; // stay not finished
+  const paid = await prisma.payment.findFirst({
+    where: { reservationNumber: r.reservationNumber, status: "success" },
+    select: { id: true },
+  });
+  return paid !== null;
+}
+
 /** The reservation row shape `summarize` needs. */
 type ReservationRow = {
   checkIn: string;
@@ -158,8 +188,8 @@ async function summarize(
 
 /**
  * Can this reservation number leave a review? Requires a CONFIRMED reservation
- * whose stay is complete (`isReviewAvailable`, set by the review-invite cron
- * once checkout has passed and payment is confirmed) and no existing review.
+ * whose stay is complete and paid for (see `isReviewOpen`) and no existing
+ * review.
  */
 export async function checkReviewEligibility(
   reservationNumber: string,
@@ -182,7 +212,9 @@ export async function checkReviewEligibility(
       },
     });
     if (!reservation) return { ok: false, reason: "not_found" };
-    if (!reservation.isReviewAvailable) return { ok: false, reason: "not_available" };
+    if (!(await isReviewOpen({ ...reservation, reservationNumber }))) {
+      return { ok: false, reason: "not_available" };
+    }
 
     const existing = await prisma.review.findFirst({
       where: { reservationNumber },
